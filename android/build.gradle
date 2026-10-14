@@ -1,0 +1,25 @@
+buildscript {
+    ext {
+        buildToolsVersion = "37.0.0"
+        // 26, not the RN template default of 24 — androidx.health.connect:connect-client
+        // requires minSdk 26 (manifest merge fails otherwise); Health Connect itself
+        // already requires Android 9 (API 28)+ to have any provider available, so this
+        // doesn't reduce reach further than the feature already implied.
+        minSdkVersion = 26
+        compileSdkVersion = 37
+        targetSdkVersion = 36
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "2.2.0"
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+    }
+}
+
+apply plugin: "com.facebook.react.rootproject"

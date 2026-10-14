@@ -1,0 +1,13 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/NotoSansBengali-Regular.ttf",
+      "sha1": "242b75f6ed7948ff620efb6e32cb7e44dfe3a020"
+    },
+    {
+      "path": "assets/fonts/NotoSansDevanagari-Regular.ttf",
+      "sha1": "13e6eba10a92441cc069092327bd43e4525ba4c5"
+    }
+  ]
+}
