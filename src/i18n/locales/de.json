@@ -444,6 +444,11 @@
     "weightRangeBody": "Gib ein Gewicht zwischen {min} und {max} kg ein."
   },
   "Habits": {
+    "connectionsTitle": "Verbindungen & Berechtigungen",
+    "connectionsSubtitle": "Bildschirmzeit, Health Connect und deine Uhr – hier einschalten und Berechtigungen geben.",
+    "statusOn": "An",
+    "statusOff": "Aus",
+    "turnOnInConnections": "Die Bildschirmzeit-Erfassung ist aus. Schalte sie unter Verbindungen & Berechtigungen ein.",
     "androidUsageNote": "Die Summen stammen aus Androids eigenem Nutzungsprotokoll und können leicht von Digital Wellbeing abweichen. Tage ohne Daten vom Telefon erscheinen als „Keine Daten“.",
     "pageTitle": "Gewohnheiten",
     "pageDescription": "Verfolge deine Bildschirmzeit und wie gut du deiner täglichen Routine gefolgt bist.",
@@ -1090,6 +1095,13 @@
     "consentNotNow": "Jetzt nicht"
   },
   "Watch": {
+    "guideToggle": "Schritt für Schritt: Uhr verbinden",
+    "guideStep1": "Kopple deine Uhr in der App der Uhr mit dem Telefon (z. B. Samsung Health, Galaxy Wearable, Fitbit, Mi Fitness).",
+    "guideStep2": "Stell sicher, dass Health Connect auf dem Telefon ist (ab Android 14 eingebaut, sonst aus dem Play Store installieren).",
+    "guideStep3": "Öffne in der App der Uhr die Einstellungen → Health Connect und schalte das Teilen von Herzfrequenz, Blutdruck und Schlaf ein.",
+    "guideStep4": "Tippe in SleepFitLearn auf Verbinden und dann auf Erlauben, damit die App diese Daten lesen kann.",
+    "guideStep5": "Trag deine Uhr. Neue Messwerte erscheinen automatisch in der App – und im Web.",
+    "guideNote": "Manche Uhren teilen nicht mit Health Connect. Wenn nichts erscheint, trag die Werte von Hand ein.",
     "title": "Uhr verbinden",
     "subtitle": "Herzfrequenz, Blutdruck und Schlaf aus der App deiner Uhr – in einem Schritt.",
     "connect": "Verbinden",
@@ -1111,6 +1123,15 @@
     "couldntOpen": "Die App konnte nicht geöffnet werden. Öffne sie über den Startbildschirm."
   },
   "HeartCamera": {
+    "guideTitle": "So misst du",
+    "step4": "Lies dein Ergebnis ab und tippe auf Speichern.",
+    "howTitle": "So funktioniert es",
+    "howBody": "Der Blitz leuchtet durch deine Fingerspitze, und jeder Herzschlag verändert leicht, wie viel rotes Licht die Kamera erreicht. Die App zählt diese Veränderungen 30 Sekunden lang und berechnet daraus deine Herzfrequenz.",
+    "tipsTitle": "Für einen guten Messwert",
+    "tip1": "Warme Hände funktionieren am besten – reib sie, wenn sie kalt sind.",
+    "tip2": "Leg die Hand auf einen Tisch und halte das Telefon still.",
+    "tip3": "Atme normal und sprich nicht während der Messung.",
+    "illustration": "Fingerspitze über Rückkamera und Blitz",
     "title": "Herzfrequenz messen",
     "measureButton": "Mit Kamera messen",
     "sourceLabel": "Kamera",

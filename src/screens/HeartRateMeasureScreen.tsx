@@ -8,7 +8,8 @@ import { ModernButton } from "../components/ModernButton";
 import { createCameraHeartRate } from "../lib/api/fitness";
 import { todayISO } from "../lib/dateRange";
 import { analyzePpg, liveFeedback, MEASURE_MS, WARMUP_MS, type Frame, type LiveFeedback, type PpgResult } from "../lib/heartCamera/ppg";
-import { heartCameraSupported, requestCameraPermission, startHeartCamera } from "../lib/native/heartCamera";
+import { GUIDE_STEPS, GUIDE_TIPS } from "../lib/heartCamera/guide";
+import { heartCameraSupported,requestCameraPermission, startHeartCamera } from "../lib/native/heartCamera";
 import { checkVitalsAccess } from "../lib/vitals/eligibility";
 
 type Phase =
@@ -141,17 +142,39 @@ export default function HeartRateMeasureScreen() {
       )}
 
       {phase.kind === "intro" && (
-        <View style={styles.card}>
-          <Text style={styles.heart}>❤️</Text>
-          {[t("step1"), t("step2"), t("step3")].map((s, i) => (
-            <Text key={s} style={styles.step}>
-              {i + 1}. {s}
-            </Text>
-          ))}
-          <Text style={styles.hint}>{t("cameraReason")}</Text>
-          <ModernButton title={t("start")} onPress={start} />
-          <Text style={styles.hint}>{t("disclaimer")}</Text>
-        </View>
+        <>
+          <View style={styles.card}>
+            <View style={styles.phone} accessible accessibilityLabel={t("illustration")}>
+              <View style={styles.lens}>
+                <Text style={styles.finger}>☝️</Text>
+              </View>
+              <Text style={styles.flash}>⚡</Text>
+            </View>
+            <Text style={styles.hint}>{t("illustration")}</Text>
+            <Text style={styles.title}>{t("guideTitle")}</Text>
+            {GUIDE_STEPS.map((k, i) => (
+              <View key={k} style={styles.stepRow}>
+                <View style={styles.stepNum}>
+                  <Text style={styles.stepNumText}>{i + 1}</Text>
+                </View>
+                <Text style={[styles.step, styles.stepText]}>{t(k)}</Text>
+              </View>
+            ))}
+            <Text style={styles.hint}>{t("cameraReason")}</Text>
+            <ModernButton title={t("start")} onPress={start} />
+            <Text style={styles.hint}>{t("disclaimer")}</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.sub}>{t("howTitle")}</Text>
+            <Text style={styles.body}>{t("howBody")}</Text>
+            <Text style={styles.sub}>{t("tipsTitle")}</Text>
+            {GUIDE_TIPS.map((k) => (
+              <Text key={k} style={styles.body}>
+                • {t(k)}
+              </Text>
+            ))}
+          </View>
+        </>
       )}
 
       {phase.kind === "measuring" && (
@@ -218,5 +241,17 @@ function makeStyles(colors: ColorPalette) {
     bpm: { fontSize: 56, fontWeight: "700", color: colors.foreground, textAlign: "center" },
     unit: { fontSize: 18, fontWeight: "400", color: colors.mutedForeground },
     badge: { fontSize: typography.body.fontSize, fontWeight: "600", textAlign: "center" },
+    phone: {
+      alignSelf: "center", width: 110, height: 150, borderRadius: 20, borderWidth: 2, borderColor: colors.border,
+      backgroundColor: colors.background, flexDirection: "row", alignItems: "flex-start", justifyContent: "center", gap: 8, paddingTop: 16,
+    },
+    lens: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#2C2C2C", alignItems: "center", justifyContent: "center" },
+    finger: { fontSize: 30 },
+    flash: { fontSize: 20, marginTop: 10 },
+    sub: { fontSize: typography.body.fontSize, fontWeight: "700", color: colors.foreground },
+    stepRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+    stepNum: { width: 26, height: 26, borderRadius: 13, backgroundColor: colors.navTint, alignItems: "center", justifyContent: "center" },
+    stepNumText: { color: "#FFFFFF", fontWeight: "700", fontSize: 13 },
+    stepText: { flex: 1 },
   });
 }

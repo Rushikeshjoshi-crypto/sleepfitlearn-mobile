@@ -17,6 +17,7 @@ import ChildDetailScreen from "../screens/ChildDetailScreen";
 import InviteChildScreen from "../screens/InviteChildScreen";
 import AcceptInviteScreen from "../screens/AcceptInviteScreen";
 import HeartRateMeasureScreen from "../screens/HeartRateMeasureScreen";
+import ConnectionsScreen from "../screens/ConnectionsScreen";
 import { PendingInviteNavigator } from "../components/family/PendingInviteNavigator";
 import { useTheme } from "../theme/ThemeContext";
 import { BackButton } from "../components/BackButton";
@@ -48,6 +49,7 @@ export type AppStackParamList = {
   AcceptInvite: { code?: string; linkId?: string } | undefined;
   // Camera heart rate (fingertip over the camera + flash) — from Personal.
   HeartRateMeasure: undefined;
+  Connections: undefined;
 };
 
 const TAB_ICONS: Record<keyof AppTabParamList, string> = {
@@ -143,6 +145,7 @@ export default function AppNavigator() {
 
   const { t: tFamily } = useTranslation("Family");
   const { t: tHeart } = useTranslation("HeartCamera");
+  const { t: tHabits } = useTranslation("Habits");
 
   return (
     <>
@@ -164,6 +167,7 @@ export default function AppNavigator() {
       <Stack.Screen name="InviteChild" component={InviteChildScreen} options={{ ...detailScreenOptions, title: tFamily("Invite.title") }} />
       <Stack.Screen name="AcceptInvite" component={AcceptInviteScreen} options={{ ...detailScreenOptions, title: tFamily("Accept.pageTitle") }} />
       <Stack.Screen name="HeartRateMeasure" component={HeartRateMeasureScreen} options={{ ...detailScreenOptions, title: tHeart("title") }} />
+      <Stack.Screen name="Connections" component={ConnectionsScreen} options={{ ...detailScreenOptions, title: tHabits("connectionsTitle") }} />
     </Stack.Navigator>
     </>
   );

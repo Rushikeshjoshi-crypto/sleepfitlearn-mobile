@@ -444,6 +444,11 @@
     "weightRangeBody": "Saisissez un poids entre {min} et {max} kg."
   },
   "Habits": {
+    "connectionsTitle": "Connexions et autorisations",
+    "connectionsSubtitle": "Temps d'écran, Health Connect et ta montre : active-les et donne les autorisations ici.",
+    "statusOn": "Activé",
+    "statusOff": "Désactivé",
+    "turnOnInConnections": "Le suivi du temps d'écran est désactivé. Active-le dans Connexions et autorisations.",
     "androidUsageNote": "Les totaux viennent du propre relevé d'utilisation d'Android et peuvent légèrement différer de Bien-être numérique. Les jours sans données du téléphone s'affichent « Pas de données ».",
     "pageTitle": "Habitudes",
     "pageDescription": "Suivez votre temps d'écran et le respect de votre routine quotidienne.",
@@ -1090,6 +1095,13 @@
     "consentNotNow": "Pas maintenant"
   },
   "Watch": {
+    "guideToggle": "Étape par étape : connecte ta montre",
+    "guideStep1": "Associe ta montre au téléphone dans l'appli de la montre (ex. Samsung Health, Galaxy Wearable, Fitbit, Mi Fitness).",
+    "guideStep2": "Vérifie que Health Connect est sur le téléphone (intégré depuis Android 14, sinon installe-le depuis le Play Store).",
+    "guideStep3": "Dans l'appli de la montre, ouvre ses réglages → Health Connect et active le partage de la fréquence cardiaque, de la tension et du sommeil.",
+    "guideStep4": "Dans SleepFitLearn, appuie sur Connecter puis sur Autoriser pour que l'appli puisse lire ces données.",
+    "guideStep5": "Porte ta montre. Les nouvelles mesures s'affichent toutes seules dans l'appli et sur le web.",
+    "guideNote": "Certaines montres ne partagent pas avec Health Connect. Si rien n'apparaît, saisis les mesures à la main.",
     "title": "Connecte ta montre",
     "subtitle": "Fréquence cardiaque, tension et sommeil depuis l'appli de ta montre, en une étape.",
     "connect": "Connecter",
@@ -1111,6 +1123,15 @@
     "couldntOpen": "Impossible d'ouvrir l'appli. Ouvre-la depuis l'écran d'accueil."
   },
   "HeartCamera": {
+    "guideTitle": "Comment mesurer",
+    "step4": "Lis ton résultat et appuie sur Enregistrer.",
+    "howTitle": "Comment ça marche",
+    "howBody": "Le flash éclaire à travers le bout de ton doigt, et chaque battement change légèrement la quantité de lumière rouge qui atteint la caméra. L'appli compte ces variations pendant 30 secondes pour calculer ta fréquence cardiaque.",
+    "tipsTitle": "Pour une bonne mesure",
+    "tip1": "Des mains chaudes, c'est mieux : frotte-les si elles sont froides.",
+    "tip2": "Pose la main sur une table et garde le téléphone immobile.",
+    "tip3": "Respire normalement et ne parle pas pendant la mesure.",
+    "illustration": "Bout du doigt sur la caméra arrière et le flash",
     "title": "Mesurer la fréquence cardiaque",
     "measureButton": "Mesurer avec la caméra",
     "sourceLabel": "Caméra",

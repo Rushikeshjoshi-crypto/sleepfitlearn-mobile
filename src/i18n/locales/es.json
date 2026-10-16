@@ -444,6 +444,11 @@
     "weightRangeBody": "Introduce un peso entre {min} y {max} kg."
   },
   "Habits": {
+    "connectionsTitle": "Conexiones y permisos",
+    "connectionsSubtitle": "Tiempo de pantalla, Health Connect y tu reloj: actívalos y da permisos aquí.",
+    "statusOn": "Activado",
+    "statusOff": "Desactivado",
+    "turnOnInConnections": "El seguimiento del tiempo de pantalla está desactivado. Actívalo en Conexiones y permisos.",
     "androidUsageNote": "Los totales vienen del propio registro de uso de Android, así que pueden diferir un poco de Bienestar digital. Los días sin datos del teléfono aparecen como «Sin datos».",
     "pageTitle": "Hábitos",
     "pageDescription": "Sigue tu tiempo de pantalla y lo bien que has mantenido tu rutina diaria.",
@@ -1090,6 +1095,13 @@
     "consentNotNow": "Ahora no"
   },
   "Watch": {
+    "guideToggle": "Paso a paso: conecta tu reloj",
+    "guideStep1": "Empareja el reloj con el teléfono en la app del propio reloj (p. ej. Samsung Health, Galaxy Wearable, Fitbit, Mi Fitness).",
+    "guideStep2": "Comprueba que Health Connect está en el teléfono (viene integrado desde Android 14; si no, instálalo desde Play Store).",
+    "guideStep3": "En la app del reloj, abre sus ajustes → Health Connect y activa compartir frecuencia cardíaca, presión arterial y sueño.",
+    "guideStep4": "En SleepFitLearn, toca Conectar y luego Permitir para que la app pueda leer esos datos.",
+    "guideStep5": "Lleva puesto el reloj. Las nuevas lecturas aparecen solas en la app y en la web.",
+    "guideNote": "Algunos relojes no comparten con Health Connect. Si no aparece nada, introduce las lecturas a mano.",
     "title": "Conecta tu reloj",
     "subtitle": "Frecuencia cardíaca, presión arterial y sueño desde la app de tu reloj, en un solo paso.",
     "connect": "Conectar",
@@ -1111,6 +1123,15 @@
     "couldntOpen": "No se pudo abrir la app. Ábrela desde la pantalla de inicio."
   },
   "HeartCamera": {
+    "guideTitle": "Cómo medir",
+    "step4": "Lee tu resultado y toca Guardar.",
+    "howTitle": "Cómo funciona",
+    "howBody": "El flash ilumina a través de la yema del dedo y cada latido cambia un poco cuánta luz roja llega a la cámara. La app cuenta esos cambios durante 30 segundos para calcular tu frecuencia cardíaca.",
+    "tipsTitle": "Para una buena lectura",
+    "tip1": "Las manos calientes funcionan mejor; frótalas si están frías.",
+    "tip2": "Apoya la mano en una mesa y mantén el teléfono quieto.",
+    "tip3": "Respira con normalidad y no hables mientras mides.",
+    "illustration": "Yema del dedo sobre la cámara trasera y el flash",
     "title": "Medir frecuencia cardíaca",
     "measureButton": "Medir con la cámara",
     "sourceLabel": "Cámara",

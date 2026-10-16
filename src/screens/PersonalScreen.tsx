@@ -64,7 +64,7 @@ import { sourceLabel } from "../lib/vitals/sourceLabel";
 import { RangeDot } from "../components/vitals/RangeDot";
 import { VitalsPersonalSection } from "../components/vitals/VitalsPersonalSection";
 import { BlurBackdrop } from "../components/BlurBackdrop";
-import { bloodPressureTile, energyBar, heartRateTile, type VitalsTile } from "../lib/vitals/tile";
+import { bloodPressureTile, energyBar, heartRateTile, tileEntry, type VitalsTile } from "../lib/vitals/tile";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -467,7 +467,8 @@ export default function PersonalScreen() {
       {/* Latest value per metric — web's VitalsGrid. */}
       <View style={styles.tileGrid}>
         {VITAL_KINDS.map((kind) => {
-          const latest = shownEntries.find((e) => e.kind === kind);
+          // Energy shows only today's score (blank until logged); others their latest.
+          const latest = tileEntry(shownEntries, kind, todayISO());
           const opensVitals = vitalsAllowed && (kind === "heart_rate" || kind === "bp");
           return (
             <AnimatedPressable
@@ -544,7 +545,8 @@ export default function PersonalScreen() {
                   </Text>
                 </>
               ) : (
-                <Text style={styles.tileEmpty}>{t("Personal:noEntriesYet")}</Text>
+                // Energy not logged today: just blank ("—"), not "No entries yet".
+                <Text style={styles.tileEmpty}>{kind === "energy_level" ? "—" : t("Personal:noEntriesYet")}</Text>
               )}
             </AnimatedPressable>
           );

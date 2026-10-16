@@ -444,6 +444,11 @@
     "weightRangeBody": "Enter a weight between {min} and {max} kg."
   },
   "Habits": {
+    "connectionsTitle": "Connections & permissions",
+    "connectionsSubtitle": "Screen time, Health Connect and your watch — turn them on and give permissions here.",
+    "statusOn": "On",
+    "statusOff": "Off",
+    "turnOnInConnections": "Screen time tracking is off. Turn it on in Connections & permissions.",
     "androidUsageNote": "Totals come from Android's own usage record, so they may differ slightly from Digital Wellbeing. Days with no data from the phone show as “No data”.",
     "pageTitle": "Habits",
     "pageDescription": "Log your screen time and how well you kept to your daily routine.",
@@ -1090,6 +1095,13 @@
     "consentNotNow": "Not now"
   },
   "Watch": {
+    "guideToggle": "Step-by-step: connect your watch",
+    "guideStep1": "Pair your watch with your phone in the watch's own app (e.g. Samsung Health, Galaxy Wearable, Fitbit, Mi Fitness).",
+    "guideStep2": "Make sure Health Connect is on your phone (built into Android 14 and newer, otherwise install it from the Play Store).",
+    "guideStep3": "In your watch's app, open its settings → Health Connect and turn on sharing for heart rate, blood pressure and sleep.",
+    "guideStep4": "In SleepFitLearn, tap Connect and then Allow, so the app can read that data.",
+    "guideStep5": "Wear your watch. New readings show up in the app — and on the web — automatically.",
+    "guideNote": "Some watches don't share with Health Connect. If nothing shows up, enter readings by hand.",
     "title": "Connect your watch",
     "subtitle": "Heart rate, blood pressure and sleep from your watch's app, in one step.",
     "connect": "Connect",
@@ -1111,6 +1123,15 @@
     "couldntOpen": "Couldn't open the app. Open it from your home screen."
   },
   "HeartCamera": {
+    "guideTitle": "How to measure",
+    "step4": "Read your result and tap Save.",
+    "howTitle": "How it works",
+    "howBody": "With the flash shining through your fingertip, each heartbeat slightly changes how much red light reaches the camera. The app counts those changes for 30 seconds to work out your heart rate.",
+    "tipsTitle": "For a good reading",
+    "tip1": "Warm hands work best — rub them together if they're cold.",
+    "tip2": "Rest your hand on a table and keep the phone still.",
+    "tip3": "Breathe normally and don't talk while measuring.",
+    "illustration": "Fingertip over the back camera and flash",
     "title": "Measure heart rate",
     "measureButton": "Measure with camera",
     "sourceLabel": "Camera",

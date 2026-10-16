@@ -41,3 +41,21 @@ test("energy label strings exist in all 7 languages", () => {
     for (const k of ["high", "good", "moderate", "low"]) expect([lang, k, typeof labels?.[k]]).toEqual([lang, k, "string"]);
   }
 });
+
+describe("which entry a tile shows", () => {
+  const { tileEntry } = require("../src/lib/vitals/tile");
+  const entries = [
+    { kind: "energy_level", date: "2026-10-12", value: 75, source: "health", sk: "e1" },
+    { kind: "weight", date: "2026-09-04", value: 58, source: "health", sk: "w1" },
+  ];
+
+  test("energy: only TODAY's entry — an older one leaves the tile blank", () => {
+    expect(tileEntry(entries, "energy_level", "2026-10-15")).toBeNull();
+    const withToday = [{ kind: "energy_level", date: "2026-10-15", value: 64, source: "health", sk: "e2" }, ...entries];
+    expect(tileEntry(withToday, "energy_level", "2026-10-15").value).toBe(64);
+  });
+
+  test("other metrics still show their latest entry, whatever the day", () => {
+    expect(tileEntry(entries, "weight", "2026-10-15").value).toBe(58);
+  });
+});

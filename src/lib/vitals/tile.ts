@@ -55,3 +55,12 @@ export function energyBar(score: number): { percent: number; label: EnergyLabel 
   const percent = Math.max(0, Math.min(100, Math.round(score)));
   return { percent, label: energyLabel(percent) };
 }
+
+// The entry a Personal tile shows. Energy is a score for ONE day (calculated
+// from that day's sleep + workout), so its tile shows only today's — blank
+// until today's is logged, never an older day's. Every other metric shows its
+// latest entry, whatever the day. `entries` come newest first.
+export function tileEntry(entries: PersonalEntry[], kind: PersonalEntry["kind"], today: string): PersonalEntry | null {
+  if (kind === "energy_level") return entries.find((e) => e.kind === kind && e.date === today) ?? null;
+  return entries.find((e) => e.kind === kind) ?? null;
+}

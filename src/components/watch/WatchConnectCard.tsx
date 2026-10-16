@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, AppState, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, AppState, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
 import { typography, type ColorPalette } from "../../theme/palettes";
@@ -12,6 +12,7 @@ import { checkVitalsAccess } from "../../lib/vitals/eligibility";
 import { getVitalsState, giveVitalsConsent } from "../../lib/vitals/preference";
 import type { Checkup, CheckupStep } from "../../lib/watch/checkup";
 import { connectWatch } from "../../lib/watch/connect";
+import { WATCH_GUIDE_STEPS } from "../../lib/watch/guide";
 import { watchAppName } from "../../lib/watch/knownApps";
 import { loadCheckup } from "../../lib/watch/loadCheckup";
 
@@ -26,6 +27,7 @@ export function WatchConnectCard({ onChanged }: { onChanged?: () => void }) {
   const [checkup, setCheckup] = useState<Checkup | null>(null);
   const [busy, setBusy] = useState(false);
   const [consentOpen, setConsentOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     setCheckup(await loadCheckup());
@@ -117,6 +119,25 @@ export function WatchConnectCard({ onChanged }: { onChanged?: () => void }) {
       <Text style={styles.title}>{t("title")}</Text>
       <Text style={styles.subtitle}>{checkup?.ready ? t("connected") : t("subtitle")}</Text>
 
+      {/* Step-by-step guide, folded; opens on tap. */}
+      <Pressable onPress={() => setGuideOpen((o) => !o)} accessibilityRole="button" accessibilityState={{ expanded: guideOpen }} style={styles.guideToggle}>
+        <Text style={styles.guideToggleText}>{t("guideToggle")}</Text>
+        <Text style={styles.guideToggleText}>{guideOpen ? "▴" : "▾"}</Text>
+      </Pressable>
+      {guideOpen && (
+        <View style={styles.guide}>
+          {WATCH_GUIDE_STEPS.map((k, i) => (
+            <View key={k} style={styles.step}>
+              <View style={styles.guideNum}>
+                <Text style={styles.guideNumText}>{i + 1}</Text>
+              </View>
+              <Text style={[styles.stepText, styles.stepBody]}>{t(k)}</Text>
+            </View>
+          ))}
+          <Text style={styles.subtitle}>{t("guideNote")}</Text>
+        </View>
+      )}
+
       {!checkup || busy ? (
         <ActivityIndicator color={colors.navTint} />
       ) : (
@@ -143,5 +164,10 @@ function makeStyles(colors: ColorPalette) {
     markTodo: { color: colors.mutedForeground },
     stepBody: { flex: 1, gap: 8 },
     stepText: { fontSize: typography.body.fontSize, color: colors.foreground, lineHeight: 21 },
+    guideToggle: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 },
+    guideToggleText: { fontSize: typography.body.fontSize, fontWeight: "600", color: colors.navTint },
+    guide: { gap: 10, backgroundColor: colors.background, borderRadius: 16, padding: 14 },
+    guideNum: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.navTint, alignItems: "center", justifyContent: "center" },
+    guideNumText: { color: "#FFFFFF", fontWeight: "700", fontSize: 12 },
   });
 }

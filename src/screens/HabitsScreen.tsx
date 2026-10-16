@@ -1,47 +1,25 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  AppState,
   FlatList,
   LayoutAnimation,
-  PermissionsAndroid,
   Platform,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   UIManager,
   View,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { AppStackParamList } from "../navigation/AppNavigator";
 import { useTranslation } from "react-i18next";
-import {
-  getTodaySummary,
-  hasUsageAccessPermission,
-  isTracking,
-  openUsageAccessSettings,
-  requestIgnoreBatteryOptimizations,
-  startTracking,
-  stopTracking,
-  type ScreenTimeTodaySummary,
-} from "../lib/native/screenTime";
-import {
-  isAvailable as isHealthConnectAvailable,
-  hasPermissions as hasHealthConnectPermissions,
-  openHealthConnectInPlayStore,
-  readExerciseSessions,
-  readSleepSessions,
-  readWeights,
-  requestPermissions as requestHealthConnectPermissions,
-} from "../lib/native/healthConnect";
-import { getSyncEnabled as getHealthConnectSyncEnabled, setSyncEnabled as setHealthConnectSyncEnabled } from "../lib/healthConnect/preference";
+import { getTodaySummary, isTracking, type ScreenTimeTodaySummary } from "../lib/native/screenTime";
+import { getSyncEnabled as getHealthConnectSyncEnabled } from "../lib/healthConnect/preference";
 import { averageDailyScreenTime, effectiveScreenTimeEvents } from "../lib/habits/screenTimeAverage";
-import { syncHealthConnect } from "../lib/healthConnect/sync";
-import { VitalsSection } from "../components/vitals/VitalsSection";
-import { WatchConnectCard } from "../components/watch/WatchConnectCard";
 import {
   listContextEvents,
   deleteContextEvent,
@@ -90,7 +68,7 @@ function eventValueLabel(event: ContextEvent): string {
 }
 
 
-type Tab = "screenTime" | "healthConnect" | "routine";
+type Tab = "screenTime" | "routine";
 
 export default function HabitsScreen() {
   const { colors } = useTheme();
@@ -107,7 +85,6 @@ export default function HabitsScreen() {
   // to 4 full cards' worth of scroll.
   const [tab, setTab] = useState<Tab>("screenTime");
   const [enabled, setEnabled] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [summary, setSummary] = useState<ScreenTimeTodaySummary | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [history, setHistory] = useState<ContextEvent[]>([]);
@@ -116,14 +93,11 @@ export default function HabitsScreen() {
   const [expandedAppGroups, setExpandedAppGroups] = useState<Set<string>>(new Set());
   // Events being edited (one day's merged screen_time rows, or one routine row).
   const [editingEvents, setEditingEvents] = useState<ContextEvent[] | null>(null);
-  const awaitingUsageAccess = useRef(false);
 
-  const [hcAvailable, setHcAvailable] = useState<boolean | null>(null);
-  const [hcPermissionGranted, setHcPermissionGranted] = useState(false);
+  // Only for the "Connections & permissions" row's On / Off line; the
+  // switches and permission flows are on ConnectionsScreen.
   const [hcSyncOn, setHcSyncOn] = useState(false);
-  const [hcBusy, setHcBusy] = useState(false);
-  const [hcLastSyncAt, setHcLastSyncAt] = useState<number | null>(null);
-  const [hcHasData, setHcHasData] = useState<boolean | null>(null);
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 
   const [routineTasks, setRoutineTasks] = useState<RoutineTask[]>([]);
   const [routineLoading, setRoutineLoading] = useState(true);
@@ -148,99 +122,9 @@ export default function HabitsScreen() {
       .catch((err) => setHistoryError(loadErrorText(err, t("Habits:loadHistoryError"))));
   }, [t]);
 
-  // Split out of refreshHealthConnect below so the post-grant path in
-  // onToggleHealthConnect can skip re-querying hasPermissions() immediately
-  // after requestPermissions() just returned true — Health Connect has a
-  // brief eventual-consistency window right after a grant where
-  // getGrantedPermissions() can still read back stale (empty) results, which
-  // was making the just-connected state show neither data nor the
-  // empty-state message.
-  const refreshHealthConnectDataPreview = useCallback(async () => {
-    const to = new Date().toISOString();
-    const from = new Date(Date.now() - 7 * 86_400_000).toISOString();
-    const [sleep, exercise, weight] = await Promise.all([
-      readSleepSessions(from, to),
-      readExerciseSessions(from, to),
-      readWeights(from, to),
-    ]);
-    setHcHasData(sleep.length + exercise.length + weight.length > 0);
-  }, []);
-
   const refreshHealthConnect = useCallback(async () => {
-    const available = await isHealthConnectAvailable();
-    setHcAvailable(available);
-    if (!available) return;
-
-    const [granted, syncOn] = await Promise.all([hasHealthConnectPermissions(), getHealthConnectSyncEnabled()]);
-    setHcPermissionGranted(granted);
-    setHcSyncOn(syncOn);
-    if (!granted) return;
-
-    await refreshHealthConnectDataPreview();
-  }, [refreshHealthConnectDataPreview]);
-
-  async function onToggleHealthConnect(next: boolean) {
-    if (!next) {
-      await setHealthConnectSyncEnabled(false);
-      setHcSyncOn(false);
-      return;
-    }
-
-    if (hcAvailable === false) {
-      Alert.alert(
-        t("Habits:hcNotInstalledTitle"),
-        t("Habits:hcNotInstalledBody"),
-        [
-          { text: t("Common:cancel"), style: "cancel" },
-          { text: t("Habits:openPlayStore"), onPress: () => openHealthConnectInPlayStore() },
-        ],
-      );
-      return;
-    }
-
-    async function finishConnecting() {
-      setHcBusy(true);
-      try {
-        await setHealthConnectSyncEnabled(true);
-        setHcSyncOn(true);
-        setHcPermissionGranted(true);
-        await syncHealthConnect();
-        setHcLastSyncAt(Date.now());
-        await refreshHealthConnectDataPreview();
-      } finally {
-        setHcBusy(false);
-      }
-    }
-
-    if (hcPermissionGranted) {
-      await finishConnecting();
-      return;
-    }
-
-    Alert.alert(
-      t("Habits:hcConnectTitle"),
-      t("Habits:hcConnectBody"),
-      [
-        { text: t("Common:cancel"), style: "cancel" },
-        {
-          text: t("Habits:continue"),
-          onPress: async () => {
-            setHcBusy(true);
-            const granted = await requestHealthConnectPermissions();
-            setHcBusy(false);
-            if (granted) {
-              await finishConnecting();
-            } else {
-              Alert.alert(
-                t("Habits:hcPermissionDeniedTitle"),
-                t("Habits:hcPermissionDeniedBody"),
-              );
-            }
-          },
-        },
-      ],
-    );
-  }
+    setHcSyncOn(await getHealthConnectSyncEnabled());
+  }, []);
 
   const refreshRoutineTasks = useCallback(() => {
     return listRoutineTasks()
@@ -326,102 +210,6 @@ export default function HabitsScreen() {
     ]);
   }
 
-  // Resuming after the user manually flips Usage Access in system Settings —
-  // that permission has no runtime dialog/callback, so this is how we detect it.
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", async (state) => {
-      if (state === "active" && awaitingUsageAccess.current) {
-        awaitingUsageAccess.current = false;
-        const granted = await hasUsageAccessPermission();
-        if (granted) {
-          await finishEnabling();
-        } else {
-          Alert.alert(
-            t("Habits:usageNotGrantedTitle"),
-            t("Habits:usageNotGrantedBody"),
-          );
-        }
-      }
-    });
-    return () => subscription.remove();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Screen-time tracking (this function through onToggle below) is a
-  // native-only feature with no web equivalent — none of its permission
-  // dialogs, toggle copy, or "One more thing" battery-optimization prompt
-  // have a source key to port from src/messages/*.json.
-  async function requestNotificationPermission() {
-    if (Platform.OS !== "android" || Platform.Version < 33) return;
-    await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS).catch(() => {});
-  }
-
-  async function finishEnabling() {
-    setBusy(true);
-    try {
-      await requestNotificationPermission();
-      startTracking();
-      await refresh();
-      Alert.alert(
-        t("Habits:batteryTitle"),
-        t("Habits:batteryBody"),
-        [
-          { text: t("Habits:skip"), style: "cancel" },
-          { text: t("Habits:openSettings"), onPress: () => requestIgnoreBatteryOptimizations() },
-        ],
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function onToggle(next: boolean) {
-    if (!next) {
-      stopTracking();
-      setEnabled(false);
-      return;
-    }
-
-    Alert.alert(
-      t("Habits:trackTitle"),
-      t("Habits:trackBody"),
-      [
-        { text: t("Common:cancel"), style: "cancel" },
-        {
-          text: t("Habits:continue"),
-          onPress: async () => {
-            setBusy(true);
-            const granted = await hasUsageAccessPermission();
-            if (granted) {
-              await finishEnabling();
-              setBusy(false);
-              return;
-            }
-            setBusy(false);
-            Alert.alert(
-              t("Habits:usageNeededTitle"),
-              t("Habits:usageNeededBody"),
-              [
-                { text: t("Common:cancel"), style: "cancel" },
-                {
-                  text: t("Habits:openSettings"),
-                  onPress: () => {
-                    awaitingUsageAccess.current = true;
-                    openUsageAccessSettings();
-                  },
-                },
-              ],
-            );
-          },
-        },
-      ],
-    );
-  }
-
-  const lastSyncedLabel =
-    summary?.lastSyncAt && summary.lastSyncAt > 0
-      ? new Date(summary.lastSyncAt).toLocaleTimeString()
-      : t("Habits:notYet");
 
   const groups = groupByDate(history, (e) => e.event_date);
 
@@ -537,10 +325,26 @@ export default function HabitsScreen() {
     >
       <AppHeader title={t("Nav:habits")} />
 
+      {/* Screen time / Health Connect / watch switches + permissions live on their own screen. */}
+      <AnimatedPressable
+        style={[styles.card, styles.connectionsRow]}
+        onPress={() => navigation.navigate("Connections")}
+        accessibilityRole="button"
+        accessibilityLabel={t("Habits:connectionsTitle")}
+      >
+        <View style={styles.toggleLabel}>
+          <Text style={styles.toggleTitle}>🔗 {t("Habits:connectionsTitle")}</Text>
+          <Text style={styles.toggleSubtitle}>
+            {t("Habits:eventTypes.screen_time")}: {enabled ? t("Habits:statusOn") : t("Habits:statusOff")} · {t("Habits:healthConnectTab")}:{" "}
+            {hcSyncOn ? t("Habits:statusOn") : t("Habits:statusOff")}
+          </Text>
+        </View>
+        <Text style={styles.chevron}>›</Text>
+      </AnimatedPressable>
+
       <SegmentedControl
         options={[
           { value: "screenTime" as const, label: t("Habits:eventTypes.screen_time") },
-          { value: "healthConnect" as const, label: t("Habits:healthConnectTab") },
           { value: "routine" as const, label: t("Habits:eventTypes.routine") },
         ]}
         value={tab}
@@ -549,27 +353,11 @@ export default function HabitsScreen() {
 
       {tab === "screenTime" && (
         <>
-          <View style={styles.card}>
-            <View style={styles.toggleRow}>
-              <View style={styles.toggleLabel}>
-                <Text style={styles.toggleTitle}>{t("Habits:trackTitle")}</Text>
-                <Text style={styles.toggleSubtitle}>{t("Habits:trackSubtitle")}</Text>
-              </View>
-              {busy ? (
-                <ActivityIndicator color={colors.navTint} />
-              ) : (
-                <Switch
-                  value={enabled}
-                  onValueChange={onToggle}
-                  trackColor={{ true: colors.navTint, false: colors.border }}
-                  thumbColor={colors.card}
-                />
-              )}
-            </View>
-            {enabled && <Text style={styles.syncedAt}>{t("Habits:lastSynced", { time: lastSyncedLabel })}</Text>}
-            {/* Day totals are backfilled from Android's own usage record (lib/screenTime/sync.ts). */}
-            <Text style={styles.syncedAt}>{t("Habits:androidUsageNote")}</Text>
-          </View>
+          {!enabled && (
+            <AnimatedPressable style={styles.card} onPress={() => navigation.navigate("Connections")} accessibilityRole="button">
+              <Text style={styles.body}>{t("Habits:turnOnInConnections")}</Text>
+            </AnimatedPressable>
+          )}
 
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>{t("Common:today")}</Text>
@@ -731,40 +519,6 @@ export default function HabitsScreen() {
         </>
       )}
 
-      {/* One-tap "Connect your watch" + checkup; the detailed switches stay below. */}
-      {tab === "healthConnect" && <WatchConnectCard onChanged={refreshHealthConnect} />}
-
-      {tab === "healthConnect" && (
-        <View style={styles.card}>
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleLabel}>
-              <Text style={styles.toggleTitle}>{t("Habits:hcConnectTitle")}</Text>
-              <Text style={styles.toggleSubtitle}>{t("Habits:hcCardSubtitle")}</Text>
-            </View>
-            {hcBusy ? (
-              <ActivityIndicator color={colors.navTint} />
-            ) : (
-              <Switch
-                value={hcSyncOn}
-                onValueChange={onToggleHealthConnect}
-                trackColor={{ true: colors.navTint, false: colors.border }}
-                thumbColor={colors.card}
-              />
-            )}
-          </View>
-          {hcSyncOn && hcLastSyncAt && (
-            <Text style={styles.syncedAt}>{t("Habits:lastSynced", { time: new Date(hcLastSyncAt).toLocaleTimeString() })}</Text>
-          )}
-          {hcAvailable === false && (
-            <Text style={styles.body}>{t("Habits:hcNotInstalledHint")}</Text>
-          )}
-          {hcSyncOn && hcPermissionGranted && hcHasData === false && (
-            <Text style={styles.body}>{t("Habits:hcNoDataHint")}</Text>
-          )}
-          <VitalsSection />
-        </View>
-      )}
-
       {tab === "routine" && (
         <View style={styles.card}>
           <View style={styles.routineHeaderRow}>
@@ -845,6 +599,8 @@ function makeStyles(colors: ColorPalette) {
       gap: 8,
     },
     toggleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+    connectionsRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+    chevron: { fontSize: 24, color: colors.mutedForeground },
     toggleLabel: { flex: 1, gap: 2 },
     toggleTitle: { fontSize: typography.body.fontSize, fontWeight: "600", color: colors.foreground },
     toggleSubtitle: { fontSize: typography.bodySmall.fontSize, color: colors.mutedForeground },

@@ -444,6 +444,11 @@
     "weightRangeBody": "Inserisci un peso tra {min} e {max} kg."
   },
   "Habits": {
+    "connectionsTitle": "Connessioni e permessi",
+    "connectionsSubtitle": "Tempo di utilizzo, Health Connect e il tuo orologio: attivali e concedi i permessi qui.",
+    "statusOn": "Attivo",
+    "statusOff": "Disattivo",
+    "turnOnInConnections": "Il monitoraggio del tempo di utilizzo è disattivato. Attivalo in Connessioni e permessi.",
     "androidUsageNote": "I totali provengono dal registro di utilizzo di Android, quindi possono differire leggermente da Benessere digitale. I giorni senza dati dal telefono appaiono come «Nessun dato».",
     "pageTitle": "Abitudini",
     "pageDescription": "Monitora il tuo tempo davanti allo schermo e quanto hai seguito la tua routine quotidiana.",
@@ -1090,6 +1095,13 @@
     "consentNotNow": "Non ora"
   },
   "Watch": {
+    "guideToggle": "Passo per passo: collega l'orologio",
+    "guideStep1": "Abbina l'orologio al telefono nell'app dell'orologio (es. Samsung Health, Galaxy Wearable, Fitbit, Mi Fitness).",
+    "guideStep2": "Controlla che Health Connect sia sul telefono (integrato da Android 14, altrimenti installalo dal Play Store).",
+    "guideStep3": "Nell'app dell'orologio apri le impostazioni → Health Connect e attiva la condivisione di frequenza cardiaca, pressione e sonno.",
+    "guideStep4": "In SleepFitLearn tocca Collega e poi Consenti, così l'app può leggere quei dati.",
+    "guideStep5": "Indossa l'orologio. Le nuove misurazioni compaiono da sole nell'app e sul web.",
+    "guideNote": "Alcuni orologi non condividono con Health Connect. Se non compare nulla, inserisci le misurazioni a mano.",
     "title": "Collega il tuo orologio",
     "subtitle": "Frequenza cardiaca, pressione e sonno dall'app del tuo orologio, in un solo passaggio.",
     "connect": "Collega",
@@ -1111,6 +1123,15 @@
     "couldntOpen": "Impossibile aprire l'app. Aprila dalla schermata Home."
   },
   "HeartCamera": {
+    "guideTitle": "Come misurare",
+    "step4": "Leggi il risultato e tocca Salva.",
+    "howTitle": "Come funziona",
+    "howBody": "Il flash illumina attraverso il polpastrello e ogni battito cambia leggermente quanta luce rossa arriva alla fotocamera. L'app conta questi cambiamenti per 30 secondi per calcolare la frequenza cardiaca.",
+    "tipsTitle": "Per una buona misurazione",
+    "tip1": "Le mani calde funzionano meglio: strofinale se sono fredde.",
+    "tip2": "Appoggia la mano su un tavolo e tieni fermo il telefono.",
+    "tip3": "Respira normalmente e non parlare durante la misurazione.",
+    "illustration": "Polpastrello sulla fotocamera posteriore e sul flash",
     "title": "Misura la frequenza cardiaca",
     "measureButton": "Misura con la fotocamera",
     "sourceLabel": "Fotocamera",
