@@ -20,7 +20,11 @@ class ScreenTimeSyncTaskService : HeadlessJsTaskService() {
             TASK_KEY,
             Arguments.createMap(),
             TASK_TIMEOUT_MS,
-            false,
+            // ScreenTimeService starts this every 20 min whether or not the
+            // app is open; "false" made React Native throw and crash the app
+            // while it was in the foreground. Safe to run then: the JS sync
+            // has one in-flight run and takes pending minutes atomically.
+            true,
         )
 
     companion object {

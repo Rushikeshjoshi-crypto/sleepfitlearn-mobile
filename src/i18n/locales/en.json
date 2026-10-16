@@ -89,6 +89,7 @@
     }
   },
   "Nav": {
+    "connections": "Connections",
     "home": "Home",
     "sleep": "Sleep",
     "study": "Study",
@@ -397,6 +398,24 @@
     "minutesLabel": "Minutes"
   },
   "Personal": {
+    "energy": {
+      "title": "Energy level",
+      "info": "Calculated automatically from the previous night's sleep ({sleepPct}%) and that day's workout ({workoutPct}%). Sleep: 7–9 hrs = 100, 6–7 or 9–10 hrs = 75, 5–6 hrs = 50, under 5 hrs = 25. Workout: 20–60 min = 100, over 60 min or high intensity = 75, under 20 min = 60, rest day = 70, 0 min = 40. If only one is logged, the score uses that one. 80+ High, 60–79 Good, 40–59 Moderate, below 40 Low.",
+      "empty": "Fill in sleep and workout to see your energy level",
+      "basedOnSleep": "Based on sleep only",
+      "basedOnWorkout": "Based on workout only",
+      "sleepPart": "Sleep: {hours} hrs ({score})",
+      "sleepMissing": "Sleep: not logged",
+      "workoutPart": "Workout: {minutes} min ({score})",
+      "workoutRest": "Workout: rest day ({score})",
+      "workoutMissing": "Workout: not logged",
+      "restDayLabel": "Rest day (no workout planned)",
+      "loadError": "Couldn't calculate your energy level — please try again.",
+      "restDayError": "Couldn't update the rest day — please try again.",
+      "openDetailsAriaLabel": "View energy level details",
+      "previousDay": "Previous day",
+      "nextDay": "Next day"
+    },
     "energyLabels": {
       "high": "High",
       "good": "Good",
@@ -1123,6 +1142,8 @@
     "couldntOpen": "Couldn't open the app. Open it from your home screen."
   },
   "HeartCamera": {
+    "accuracyTitle": "How accurate is it?",
+    "accuracyBody": "It's an estimate, not a medical reading. When you sit still and the signal is good, it's usually close to a pulse counted by hand. Your result shows \"Good signal\" or \"Fair signal\" so you know how far to trust it — moving, cold fingers or pressing hard make it less accurate. For a medical check, use a proper device or see a doctor.",
     "guideTitle": "How to measure",
     "step4": "Read your result and tap Save.",
     "howTitle": "How it works",

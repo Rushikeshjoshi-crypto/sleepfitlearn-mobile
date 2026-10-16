@@ -10,6 +10,7 @@ jest.mock("../src/lib/api/client", () => ({
 jest.mock("../src/lib/energy/sync", () => ({
   queueEnergySync: jest.fn(),
   dateFromSk: (sk) => sk.split("#")[0].slice(0, 10),
+  energyDateForSleep: (d) => `next(${d})`,
 }));
 
 import { queueEnergySync } from "../src/lib/energy/sync";
@@ -18,11 +19,12 @@ import { createExerciseEntry, deleteExerciseEntry, updateExerciseEntry } from ".
 
 beforeEach(() => jest.clearAllMocks());
 
-test("sleep create / edit / delete queue that date's energy sync", async () => {
+// A night counts for the NEXT day's energy (energyDateForSleep).
+test("sleep create / edit / delete queue the next day's energy sync", async () => {
   await createSleepEntry({ sleep_date: "2026-10-06", duration_hours: 8 });
   await updateSleepEntry("2026-10-05#a", { duration_hours: 7 });
   await deleteSleepEntry("2026-10-04#b");
-  expect(queueEnergySync.mock.calls).toEqual([["2026-10-06"], ["2026-10-05"], ["2026-10-04"]]);
+  expect(queueEnergySync.mock.calls).toEqual([["next(2026-10-06)"], ["next(2026-10-05)"], ["next(2026-10-04)"]]);
 });
 
 test("exercise create / edit / delete queue that date's energy sync", async () => {

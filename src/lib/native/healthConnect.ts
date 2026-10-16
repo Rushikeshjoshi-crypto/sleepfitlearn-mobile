@@ -101,9 +101,7 @@ export async function requestPermissions(): Promise<boolean> {
 
 export async function readSleepSessions(from: string, to: string): Promise<HealthConnectSleepSession[]> {
   if (!IS_SUPPORTED) return [];
-  const { records } = await readRecords("SleepSession", {
-    timeRangeFilter: { operator: "between", startTime: from, endTime: to },
-  });
+  const records = await readAllPages("SleepSession", from, to);
   return records.map((r) => ({
     startTime: r.startTime,
     endTime: r.endTime,
@@ -113,9 +111,7 @@ export async function readSleepSessions(from: string, to: string): Promise<Healt
 
 export async function readExerciseSessions(from: string, to: string): Promise<HealthConnectExerciseSession[]> {
   if (!IS_SUPPORTED) return [];
-  const { records } = await readRecords("ExerciseSession", {
-    timeRangeFilter: { operator: "between", startTime: from, endTime: to },
-  });
+  const records = await readAllPages("ExerciseSession", from, to);
   return records.map((r) => ({
     startTime: r.startTime,
     endTime: r.endTime,
@@ -126,9 +122,7 @@ export async function readExerciseSessions(from: string, to: string): Promise<He
 
 export async function readWeights(from: string, to: string): Promise<HealthConnectWeightSample[]> {
   if (!IS_SUPPORTED) return [];
-  const { records } = await readRecords("Weight", {
-    timeRangeFilter: { operator: "between", startTime: from, endTime: to },
-  });
+  const records = await readAllPages("Weight", from, to);
   return records.map((r) => ({
     time: r.time,
     weightKg: r.weight.inKilograms,
@@ -166,8 +160,9 @@ export async function requestVitalsPermissions(): Promise<Set<VitalType>> {
 }
 
 // Health Connect pages large reads (a watch writes HR all day); every page
-// is fetched, following pageToken until there's none.
-async function readAllPages<T extends "HeartRate" | "RestingHeartRate" | "BloodPressure">(recordType: T, from: string, to: string) {
+// is fetched, following pageToken until there's none. Used for sleep /
+// exercise / weight too (they used to read only the first page).
+async function readAllPages<T extends SyncedRecordType | "HeartRate" | "RestingHeartRate" | "BloodPressure">(recordType: T, from: string, to: string) {
   const all = [];
   let pageToken: string | undefined;
   do {

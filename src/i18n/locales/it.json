@@ -89,6 +89,7 @@
     }
   },
   "Nav": {
+    "connections": "Connessioni",
     "home": "Home",
     "sleep": "Sonno",
     "study": "Studio",
@@ -397,6 +398,24 @@
     "minutesLabel": "Minuti"
   },
   "Personal": {
+    "energy": {
+      "title": "Livello di energia",
+      "info": "Calcolato automaticamente dal sonno della notte precedente ({sleepPct}%) e dall'allenamento del giorno ({workoutPct}%). Sonno: 7–9 h = 100, 6–7 o 9–10 h = 75, 5–6 h = 50, meno di 5 h = 25. Allenamento: 20–60 min = 100, oltre 60 min o intensità alta = 75, meno di 20 min = 60, giorno di riposo = 70, 0 min = 40. Se ne è registrato solo uno, il punteggio usa quello. 80+ Alto, 60–79 Buono, 40–59 Moderato, sotto 40 Basso.",
+      "empty": "Registra sonno e allenamento per vedere il tuo livello di energia",
+      "basedOnSleep": "Basato solo sul sonno",
+      "basedOnWorkout": "Basato solo sull'allenamento",
+      "sleepPart": "Sonno: {hours} h ({score})",
+      "sleepMissing": "Sonno: non registrato",
+      "workoutPart": "Allenamento: {minutes} min ({score})",
+      "workoutRest": "Allenamento: giorno di riposo ({score})",
+      "workoutMissing": "Allenamento: non registrato",
+      "restDayLabel": "Giorno di riposo (nessun allenamento previsto)",
+      "loadError": "Impossibile calcolare il livello di energia: riprova.",
+      "restDayError": "Impossibile aggiornare il giorno di riposo: riprova.",
+      "openDetailsAriaLabel": "Vedi i dettagli del livello di energia",
+      "previousDay": "Giorno precedente",
+      "nextDay": "Giorno successivo"
+    },
     "energyLabels": {
       "high": "Alto",
       "good": "Buono",
@@ -1123,6 +1142,8 @@
     "couldntOpen": "Impossibile aprire l'app. Aprila dalla schermata Home."
   },
   "HeartCamera": {
+    "accuracyTitle": "Quanto è precisa?",
+    "accuracyBody": "È una stima, non una misurazione medica. Se stai fermo e il segnale è buono, di solito è vicina al battito contato a mano. Il risultato mostra «Segnale buono» o «Segnale discreto» così sai quanto fidarti: muoverti, avere le dita fredde o premere forte la rendono meno precisa. Per un controllo medico usa un dispositivo adatto o rivolgiti a un medico.",
     "guideTitle": "Come misurare",
     "step4": "Leggi il risultato e tocca Salva.",
     "howTitle": "Come funziona",

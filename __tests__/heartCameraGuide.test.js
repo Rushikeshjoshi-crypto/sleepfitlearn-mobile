@@ -7,6 +7,13 @@ test("guide: 4 steps, 3 tips", () => {
   expect(GUIDE_TIPS).toEqual(["tip1", "tip2", "tip3"]);
 });
 
+test("guide has a 'how accurate is it' point", () => {
+  expect(GUIDE_KEYS).toEqual(expect.arrayContaining(["accuracyTitle", "accuracyBody"]));
+  const src = require("fs").readFileSync(require("path").join(__dirname, "../src/screens/HeartRateMeasureScreen.tsx"), "utf8");
+  expect(src).toMatch(/t\("accuracyTitle"\)/);
+  expect(src).toMatch(/t\("accuracyBody"\)/);
+});
+
 test("guide strings exist in all 7 languages", () => {
   for (const lang of ["en", "hi", "bn", "de", "es", "fr", "it"]) {
     const hc = require(`../src/i18n/locales/${lang}.json`).HeartCamera;

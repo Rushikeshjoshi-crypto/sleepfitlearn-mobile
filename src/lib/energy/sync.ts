@@ -78,15 +78,30 @@ export function dateFromSk(sk: string): string {
   return sk.split("#")[0].slice(0, 10);
 }
 
+// "YYYY-MM-DD" moved by whole calendar days (noon, so DST never skips a day).
+function shiftDate(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const date = new Date(y, m - 1, d + days, 12);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+// A day's energy uses the night BEFORE it: a night's sleep_date is the evening
+// it started ("Last night" = yesterday), so today's energy = last night's
+// sleep + today's workout. Sleep writes re-sync this date, not the sleep_date.
+export function energyDateForSleep(sleepDate: string): string {
+  return shiftDate(sleepDate, 1);
+}
+
 async function loadDay(date: string) {
   const range = { from: date, to: date };
+  const night = shiftDate(date, -1);
   const [sleep, exercise, health] = await Promise.all([
-    apiGet<SleepRow[]>("sleep", "", range),
+    apiGet<SleepRow[]>("sleep", "", { from: night, to: night }),
     apiGet<ExerciseRow[]>("fitness", "exercise", range),
     apiGet<HealthRow[]>("fitness", "health", range),
   ]);
   return {
-    sleep: (sleep ?? []).filter((r) => r.sleep_date === date),
+    sleep: (sleep ?? []).filter((r) => r.sleep_date === night),
     exercise: (exercise ?? []).filter((r) => r.event_date === date),
     health: (health ?? []).filter((r) => r.measured_at === date),
   };
@@ -164,7 +179,8 @@ async function runSync(date: string): Promise<{ snapshot: EnergySnapshot; change
   return { snapshot, changed };
 }
 
-// Recalculates the date's energy from its sleep + workout entries and stores
+// Recalculates the date's energy from the night before's sleep + the date's
+// workout entries and stores
 // it as the date's single energy_level health metric (removed when neither
 // input exists). Syncs for the same date run one after another so two quick
 // saves can't both POST a new row.

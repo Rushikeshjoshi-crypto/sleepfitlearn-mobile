@@ -70,10 +70,15 @@ class ScreenTimeModule(reactContext: ReactApplicationContext) :
         store.trackingEnabled = true
         val context = reactApplicationContext
         val intent = Intent(context, ScreenTimeService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(intent)
-        } else {
-            context.startService(intent)
+        // Also called on every app open (ForegroundSync) to resume tracking;
+        // if Android refuses the start at that moment, try again next time
+        // instead of crashing the app.
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
         }
     }
 

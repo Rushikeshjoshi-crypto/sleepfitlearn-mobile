@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
 import { syncScreenTime } from "../lib/screenTime/sync";
+import { isTracking, startTracking } from "../lib/native/screenTime";
 import { syncHealthConnectIfEnabled } from "../lib/healthConnect/sync";
 import { syncVitals } from "../lib/vitals/sync";
 
@@ -20,6 +21,13 @@ import { syncVitals } from "../lib/vitals/sync";
 // never left as an unhandled promise rejection.
 export function runForegroundSyncs(): Promise<void> {
   return Promise.all([
+    // Android can refuse to (re)start the tracking service from the
+    // background (e.g. after an app update — BootReceiver now just skips
+    // it), so the app being open restarts it if tracking is switched on.
+    // Starting it while it already runs is a no-op (ScreenTimeService).
+    isTracking()
+      .then((on) => on && startTracking())
+      .catch((err) => console.warn("Couldn't resume screen-time tracking", err)),
     syncScreenTime().catch((err) => console.warn("Foreground screen-time sync failed", err)),
     syncHealthConnectIfEnabled().catch((err) => console.warn("Foreground Health Connect sync failed", err)),
     // Heart rate / BP: no-op unless consented, switched on and allowed (lib/vitals/sync.ts).

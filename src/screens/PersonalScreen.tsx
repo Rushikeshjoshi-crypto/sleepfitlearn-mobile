@@ -46,6 +46,7 @@ import SelectModal, { type SelectSection } from "../components/SelectModal";
 import { useTheme } from "../theme/ThemeContext";
 import { typography, type ColorPalette } from "../theme/palettes";
 import { AnimatedPressable } from "../components/AnimatedPressable";
+import { ModernButton } from "../components/ModernButton";
 import CalendarModal from "../components/CalendarModal";
 import { loadErrorText } from "../lib/api/gateErrors";
 import { useSingleFlight } from "../lib/singleFlight";
@@ -63,6 +64,7 @@ import {
 import { sourceLabel } from "../lib/vitals/sourceLabel";
 import { RangeDot } from "../components/vitals/RangeDot";
 import { VitalsPersonalSection } from "../components/vitals/VitalsPersonalSection";
+import { EnergyDetailSection } from "../components/energy/EnergyDetailSection";
 import { BlurBackdrop } from "../components/BlurBackdrop";
 import { bloodPressureTile, energyBar, heartRateTile, tileEntry, type VitalsTile } from "../lib/vitals/tile";
 
@@ -178,6 +180,8 @@ export default function PersonalScreen() {
   const [formOpen, setFormOpen] = useState(false);
   // Heart rate & BP details (from tapping either tile).
   const [vitalsDetailOpen, setVitalsDetailOpen] = useState(false);
+  // The Energy tile opens its own popup (score breakdown, earlier days, rest day).
+  const [energyDetailOpen, setEnergyDetailOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -470,13 +474,15 @@ export default function PersonalScreen() {
           // Energy shows only today's score (blank until logged); others their latest.
           const latest = tileEntry(shownEntries, kind, todayISO());
           const opensVitals = vitalsAllowed && (kind === "heart_rate" || kind === "bp");
+          const opensPopup = opensVitals || kind === "energy_level";
           return (
             <AnimatedPressable
               key={kind}
               style={styles.tile}
-              onPress={opensVitals ? () => setVitalsDetailOpen(true) : undefined}
-              disabled={!opensVitals}
-              accessibilityRole={opensVitals ? "button" : undefined}
+              onPress={kind === "energy_level" ? () => setEnergyDetailOpen(true) : opensVitals ? () => setVitalsDetailOpen(true) : undefined}
+              disabled={!opensPopup}
+              accessibilityRole={opensPopup ? "button" : undefined}
+              accessibilityLabel={kind === "energy_level" ? t("Personal:energy.openDetailsAriaLabel") : undefined}
             >
               <View style={styles.tileHeader}>
                 <Text style={styles.tileLabel} numberOfLines={1}>
@@ -575,6 +581,20 @@ export default function PersonalScreen() {
         </BlurBackdrop>
       </Modal>
 
+      {/* Energy details: a popup from the Energy tile (same as the web's EnergyDialog). */}
+      <Modal visible={energyDetailOpen} transparent animationType="fade" onRequestClose={() => setEnergyDetailOpen(false)}>
+        <BlurBackdrop>
+          <View style={styles.sheet}>
+            <ScrollView contentContainerStyle={styles.sheetContent}>
+              <EnergyDetailSection onChanged={refresh} />
+              <AnimatedPressable style={styles.secondaryButton} onPress={() => setEnergyDetailOpen(false)}>
+                <Text style={styles.secondaryButtonText}>{t("Vitals:close")}</Text>
+              </AnimatedPressable>
+            </ScrollView>
+          </View>
+        </BlurBackdrop>
+      </Modal>
+
       {/* Log / edit form — a popup from a tile's "+" or a history row. */}
       <Modal visible={formOpen} transparent animationType="fade" onRequestClose={resetForm}>
         <BlurBackdrop>
@@ -603,15 +623,15 @@ export default function PersonalScreen() {
 
                 {/* Heart rate can also be measured with the camera (same account rule as Health Connect). */}
                 {metricType === "heart_rate" && vitalsAllowed && !editingEntry && (
-                  <AnimatedPressable
-                    style={styles.secondaryButton}
+                  <ModernButton
+                    title={`📷 ${t("HeartCamera:measureButton")}`}
+                    variant="outline"
+                    style={styles.measureButton}
                     onPress={() => {
                       resetForm();
                       navigation.navigate("HeartRateMeasure");
                     }}
-                  >
-                    <Text style={styles.secondaryButtonText}>❤️ {t("HeartCamera:measureButton")}</Text>
-                  </AnimatedPressable>
+                  />
                 )}
 
                 {metricType === "bp" ? (
@@ -833,6 +853,8 @@ function makeStyles(colors: ColorPalette) {
   button: { backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 20 },
   buttonText: { color: colors.primaryForeground, fontSize: typography.button.fontSize, fontWeight: "600" },
   secondaryButton: { borderRadius: 999, paddingVertical: 12, paddingHorizontal: 20 },
+  // Heart-rate red so "Measure with camera" reads as a button, not another input box.
+  measureButton: { borderColor: "#F43F5E", borderWidth: 1.5, backgroundColor: "rgba(244, 63, 94, 0.12)" },
   secondaryButtonText: { color: colors.mutedForeground, fontSize: typography.button.fontSize, fontWeight: "500" },
   });
 }

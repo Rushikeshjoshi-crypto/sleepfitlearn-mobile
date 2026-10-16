@@ -12,7 +12,8 @@ import { getUserProfile } from "../lib/api/users";
 import { getFamilyStatus } from "../lib/api/family";
 import { showParentDashboardEntry } from "../lib/family/parentNav";
 
-const ITEM_ROUTES: (keyof AppStackParamList)[] = ["Insights", "Settings", "Study", "Exercise", "Personal", "Billing"];
+// Connections (screen time, watch, Health Connect permissions) is mobile-only.
+const ITEM_ROUTES: (keyof AppStackParamList)[] = ["Insights", "Settings", "Study", "Exercise", "Personal", "Connections", "Billing"];
 
 // No icon library on mobile — glyphs stand in, same convention as
 // HabitsScreen's EVENT_TYPE_GLYPH and Insights' METRIC_GLYPH.
@@ -22,6 +23,7 @@ const ITEM_GLYPH: Partial<Record<keyof AppStackParamList, string>> = {
   Study: "📖",
   Exercise: "🏋️",
   Personal: "👤",
+  Connections: "🔗",
   Billing: "💳",
   ParentDashboard: "👪",
 };

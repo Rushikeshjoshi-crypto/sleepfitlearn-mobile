@@ -14,6 +14,8 @@ import { METRIC_META } from "../src/lib/api/fitness";
 import { getEnergyInsight, getPatternInsight } from "../src/lib/insights/insightEngine";
 
 const DATE = "2026-10-07";
+// A day's energy uses the night before it (sleep_date = the evening it started).
+const NIGHT = "2026-10-06";
 
 // GET sleep / exercise / health for the date.
 function day({ sleep = [], exercise = [], health = [] }) {
@@ -40,7 +42,7 @@ test("formula: same bands and weights as web", () => {
 });
 
 test("sync: a date with sleep posts one energy_level row, 0–100, unit '/ 100'", async () => {
-  day({ sleep: [{ sk: `${DATE}#s`, sleep_date: DATE, duration_hours: 8 }] });
+  day({ sleep: [{ sk: `${NIGHT}#s`, sleep_date: NIGHT, duration_hours: 8 }] });
   await syncEnergyForDate(DATE);
   expect(client.apiPost).toHaveBeenCalledWith(
     "fitness",
@@ -52,7 +54,7 @@ test("sync: a date with sleep posts one energy_level row, 0–100, unit '/ 100'"
 
 test("sync: an old manual 1–5 row on that date is replaced by the calculated score", async () => {
   day({
-    sleep: [{ sk: `${DATE}#s`, sleep_date: DATE, duration_hours: 5.5 }],
+    sleep: [{ sk: `${NIGHT}#s`, sleep_date: NIGHT, duration_hours: 5.5 }],
     health: [{ sk: `${DATE}#old`, measured_at: DATE, metric_type: "energy_level", value: 3, unit: "/ 5" }],
   });
   await syncEnergyForDate(DATE);
@@ -95,14 +97,30 @@ test("steady-energy copy reads out of 100, not 10", () => {
 test("sync counts one sleep row per night (manual beats Health Connect), not the sum", async () => {
   day({
     sleep: [
-      { sk: `${DATE}#m-old`, sleep_date: DATE, duration_hours: 5, notes: null, created_at: "2026-10-07T06:00:00.000Z" },
-      { sk: `${DATE}#m`, sleep_date: DATE, duration_hours: 8, notes: null, created_at: "2026-10-07T07:00:00.000Z" },
-      { sk: `${DATE}#hc`, sleep_date: DATE, duration_hours: 6, notes: "Synced from Health Connect", created_at: "2026-10-07T09:00:00.000Z" },
+      { sk: `${NIGHT}#m-old`, sleep_date: NIGHT, duration_hours: 5, notes: null, created_at: "2026-10-07T06:00:00.000Z" },
+      { sk: `${NIGHT}#m`, sleep_date: NIGHT, duration_hours: 8, notes: null, created_at: "2026-10-07T07:00:00.000Z" },
+      { sk: `${NIGHT}#hc`, sleep_date: NIGHT, duration_hours: 6, notes: "Synced from Health Connect", created_at: "2026-10-07T09:00:00.000Z" },
     ],
   });
   const { snapshot } = await syncEnergyForDate(DATE);
   expect(snapshot.sleepHours).toBe(8);
   const body = client.apiPost.mock.calls[0][2];
-  expect(body.meta.sleep_sks).toEqual([`${DATE}#m`]);
+  expect(body.meta.sleep_sks).toEqual([`${NIGHT}#m`]);
   expect(body.value).toBe(100);
+});
+
+// "Last night" is saved with sleep_date = yesterday, so today's energy used to
+// show "Sleep: not logged". Now a day reads the previous night only.
+test("sync: a date's energy reads the previous night's sleep, not a night on that same date", async () => {
+  day({ sleep: [{ sk: `${DATE}#same`, sleep_date: DATE, duration_hours: 8 }] });
+  const { snapshot } = await syncEnergyForDate(DATE);
+  expect(snapshot.sleepHours).toBeNull();
+  expect(client.apiGet).toHaveBeenCalledWith("sleep", "", { from: NIGHT, to: NIGHT });
+});
+
+test("energyDateForSleep: a night counts for the next day's energy", () => {
+  const { energyDateForSleep } = require("../src/lib/energy/sync");
+  expect(energyDateForSleep("2026-10-15")).toBe("2026-10-16");
+  expect(energyDateForSleep("2026-10-31")).toBe("2026-11-01");
+  expect(energyDateForSleep("2026-12-31")).toBe("2027-01-01");
 });

@@ -20,10 +20,16 @@ class BootReceiver : BroadcastReceiver() {
         if (!store.trackingEnabled) return
 
         val serviceIntent = Intent(context, ScreenTimeService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
-            context.startService(serviceIntent)
+        // Android may refuse a foreground-service start here
+        // (ForegroundServiceStartNotAllowedException, seen after an app
+        // update) — that used to crash the app. Skip it instead; the next
+        // time the app is opened, ForegroundSync starts tracking again.
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
         }
     }
 }

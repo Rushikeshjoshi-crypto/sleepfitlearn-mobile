@@ -89,6 +89,7 @@
     }
   },
   "Nav": {
+    "connections": "Connexions",
     "home": "Accueil",
     "sleep": "Sommeil",
     "study": "Étude",
@@ -397,6 +398,24 @@
     "minutesLabel": "Minutes"
   },
   "Personal": {
+    "energy": {
+      "title": "Niveau d'énergie",
+      "info": "Calculé automatiquement à partir du sommeil de la nuit précédente ({sleepPct} %) et de l'entraînement du jour ({workoutPct} %). Sommeil : 7–9 h = 100, 6–7 ou 9–10 h = 75, 5–6 h = 50, moins de 5 h = 25. Entraînement : 20–60 min = 100, plus de 60 min ou intensité élevée = 75, moins de 20 min = 60, jour de repos = 70, 0 min = 40. Si un seul est saisi, le score repose sur celui-ci. 80+ Élevé, 60–79 Bon, 40–59 Modéré, moins de 40 Faible.",
+      "empty": "Saisissez votre sommeil et votre entraînement pour voir votre niveau d'énergie",
+      "basedOnSleep": "Basé uniquement sur le sommeil",
+      "basedOnWorkout": "Basé uniquement sur l'entraînement",
+      "sleepPart": "Sommeil : {hours} h ({score})",
+      "sleepMissing": "Sommeil : non saisi",
+      "workoutPart": "Entraînement : {minutes} min ({score})",
+      "workoutRest": "Entraînement : jour de repos ({score})",
+      "workoutMissing": "Entraînement : non saisi",
+      "restDayLabel": "Jour de repos (aucun entraînement prévu)",
+      "loadError": "Impossible de calculer votre niveau d'énergie — veuillez réessayer.",
+      "restDayError": "Impossible de mettre à jour le jour de repos — veuillez réessayer.",
+      "openDetailsAriaLabel": "Voir le détail du niveau d'énergie",
+      "previousDay": "Jour précédent",
+      "nextDay": "Jour suivant"
+    },
     "energyLabels": {
       "high": "Élevé",
       "good": "Bon",
@@ -1123,6 +1142,8 @@
     "couldntOpen": "Impossible d'ouvrir l'appli. Ouvre-la depuis l'écran d'accueil."
   },
   "HeartCamera": {
+    "accuracyTitle": "Est-ce précis ?",
+    "accuracyBody": "C'est une estimation, pas une mesure médicale. Si tu restes immobile et que le signal est bon, elle est en général proche d'un pouls compté à la main. Le résultat indique « Bon signal » ou « Signal moyen » pour que tu saches à quel point t'y fier : bouger, avoir les doigts froids ou appuyer fort la rendent moins précise. Pour un contrôle médical, utilise un vrai appareil ou consulte un médecin.",
     "guideTitle": "Comment mesurer",
     "step4": "Lis ton résultat et appuie sur Enregistrer.",
     "howTitle": "Comment ça marche",

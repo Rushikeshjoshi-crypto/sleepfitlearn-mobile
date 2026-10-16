@@ -1,5 +1,5 @@
 import { apiGet, apiPost, apiPut, apiDelete } from "./client";
-import { dateFromSk, queueEnergySync } from "../energy/sync";
+import { dateFromSk, energyDateForSleep, queueEnergySync } from "../energy/sync";
 
 export type SleepEntry = {
   id: string;
@@ -30,23 +30,24 @@ export function listSleepEntries(range?: { from: string; to: string }): Promise<
   return apiGet<SleepEntry[]>("sleep", "", range);
 }
 
-// Every sleep write also recalculates that date's energy level (see lib/energy).
+// Every sleep write also recalculates the NEXT day's energy level — a night
+// counts for the day after it (lib/energy energyDateForSleep).
 export async function createSleepEntry(input: SleepEntryInput): Promise<SleepEntry> {
   const entry = await apiPost<SleepEntry>("sleep", "", input);
-  queueEnergySync(input.sleep_date);
+  queueEnergySync(energyDateForSleep(input.sleep_date));
   return entry;
 }
 
 // `sk` contains a "#" and must be encoded before it reaches the URL.
 export async function updateSleepEntry(sk: string, input: SleepEntryUpdate): Promise<SleepEntry> {
   const entry = await apiPut<SleepEntry>("sleep", encodeURIComponent(sk), input);
-  queueEnergySync(dateFromSk(sk));
+  queueEnergySync(energyDateForSleep(dateFromSk(sk)));
   return entry;
 }
 
 export async function deleteSleepEntry(sk: string): Promise<void> {
   await apiDelete("sleep", encodeURIComponent(sk));
-  queueEnergySync(dateFromSk(sk));
+  queueEnergySync(energyDateForSleep(dateFromSk(sk)));
 }
 
 // Client-side only — the backend accepts any duration_hours value silently

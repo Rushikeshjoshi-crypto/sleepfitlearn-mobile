@@ -37,3 +37,12 @@ test("connections strings exist in all 7 languages", () => {
     }
   }
 });
+
+test("the hamburger menu has Connections (mobile only — web has no such page)", () => {
+  const menu = read("src/components/HamburgerMenu.tsx");
+  expect(menu).toMatch(/const ITEM_ROUTES[^;]*"Personal", "Connections", "Billing"\]/);
+  expect(menu).toMatch(/Connections: "🔗"/);
+  for (const lang of ["en", "hi", "bn", "de", "es", "fr", "it"]) {
+    expect([lang, typeof require(`../src/i18n/locales/${lang}.json`).Nav.connections]).toEqual([lang, "string"]);
+  }
+});

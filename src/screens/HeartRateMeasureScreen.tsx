@@ -167,6 +167,8 @@ export default function HeartRateMeasureScreen() {
           <View style={styles.card}>
             <Text style={styles.sub}>{t("howTitle")}</Text>
             <Text style={styles.body}>{t("howBody")}</Text>
+            <Text style={styles.sub}>{t("accuracyTitle")}</Text>
+            <Text style={styles.body}>{t("accuracyBody")}</Text>
             <Text style={styles.sub}>{t("tipsTitle")}</Text>
             {GUIDE_TIPS.map((k) => (
               <Text key={k} style={styles.body}>

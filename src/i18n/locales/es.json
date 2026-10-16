@@ -89,6 +89,7 @@
     }
   },
   "Nav": {
+    "connections": "Conexiones",
     "home": "Inicio",
     "sleep": "Sueño",
     "study": "Estudio",
@@ -397,6 +398,24 @@
     "minutesLabel": "Minutos"
   },
   "Personal": {
+    "energy": {
+      "title": "Nivel de energía",
+      "info": "Se calcula automáticamente a partir del sueño de la noche anterior ({sleepPct} %) y el ejercicio del día ({workoutPct} %). Sueño: 7–9 h = 100, 6–7 o 9–10 h = 75, 5–6 h = 50, menos de 5 h = 25. Ejercicio: 20–60 min = 100, más de 60 min o intensidad alta = 75, menos de 20 min = 60, día de descanso = 70, 0 min = 40. Si solo hay uno registrado, se usa ese. 80+ Alto, 60–79 Bueno, 40–59 Moderado, menos de 40 Bajo.",
+      "empty": "Registra tu sueño y ejercicio para ver tu nivel de energía",
+      "basedOnSleep": "Basado solo en el sueño",
+      "basedOnWorkout": "Basado solo en el ejercicio",
+      "sleepPart": "Sueño: {hours} h ({score})",
+      "sleepMissing": "Sueño: sin registrar",
+      "workoutPart": "Ejercicio: {minutes} min ({score})",
+      "workoutRest": "Ejercicio: día de descanso ({score})",
+      "workoutMissing": "Ejercicio: sin registrar",
+      "restDayLabel": "Día de descanso (sin ejercicio previsto)",
+      "loadError": "No se pudo calcular tu nivel de energía. Inténtalo de nuevo.",
+      "restDayError": "No se pudo actualizar el día de descanso. Inténtalo de nuevo.",
+      "openDetailsAriaLabel": "Ver detalles del nivel de energía",
+      "previousDay": "Día anterior",
+      "nextDay": "Día siguiente"
+    },
     "energyLabels": {
       "high": "Alto",
       "good": "Bueno",
@@ -1123,6 +1142,8 @@
     "couldntOpen": "No se pudo abrir la app. Ábrela desde la pantalla de inicio."
   },
   "HeartCamera": {
+    "accuracyTitle": "¿Qué tan precisa es?",
+    "accuracyBody": "Es una estimación, no una lectura médica. Si estás quieto y la señal es buena, suele acercarse al pulso contado a mano. El resultado muestra «Buena señal» o «Señal regular» para que sepas cuánto confiar en él: moverte, tener los dedos fríos o presionar fuerte lo hacen menos preciso. Para un control médico, usa un aparato adecuado o consulta a un médico.",
     "guideTitle": "Cómo medir",
     "step4": "Lee tu resultado y toca Guardar.",
     "howTitle": "Cómo funciona",

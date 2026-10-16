@@ -89,6 +89,7 @@
     }
   },
   "Nav": {
+    "connections": "Verbindungen",
     "home": "Start",
     "sleep": "Schlaf",
     "study": "Lernen",
@@ -397,6 +398,24 @@
     "minutesLabel": "Minuten"
   },
   "Personal": {
+    "energy": {
+      "title": "Energielevel",
+      "info": "Wird automatisch aus dem Schlaf der Nacht davor ({sleepPct} %) und dem Training des Tages ({workoutPct} %) berechnet. Schlaf: 7–9 Std. = 100, 6–7 oder 9–10 Std. = 75, 5–6 Std. = 50, unter 5 Std. = 25. Training: 20–60 Min. = 100, über 60 Min. oder hohe Intensität = 75, unter 20 Min. = 60, Ruhetag = 70, 0 Min. = 40. Ist nur eines erfasst, zählt nur dieses. 80+ Hoch, 60–79 Gut, 40–59 Mittel, unter 40 Niedrig.",
+      "empty": "Erfasse Schlaf und Training, um dein Energielevel zu sehen",
+      "basedOnSleep": "Nur auf Basis von Schlaf",
+      "basedOnWorkout": "Nur auf Basis von Training",
+      "sleepPart": "Schlaf: {hours} Std. ({score})",
+      "sleepMissing": "Schlaf: nicht erfasst",
+      "workoutPart": "Training: {minutes} Min. ({score})",
+      "workoutRest": "Training: Ruhetag ({score})",
+      "workoutMissing": "Training: nicht erfasst",
+      "restDayLabel": "Ruhetag (kein Training geplant)",
+      "loadError": "Dein Energielevel konnte nicht berechnet werden – bitte versuche es erneut.",
+      "restDayError": "Der Ruhetag konnte nicht aktualisiert werden – bitte versuche es erneut.",
+      "openDetailsAriaLabel": "Details zum Energielevel anzeigen",
+      "previousDay": "Vorheriger Tag",
+      "nextDay": "Nächster Tag"
+    },
     "energyLabels": {
       "high": "Hoch",
       "good": "Gut",
@@ -1123,6 +1142,8 @@
     "couldntOpen": "Die App konnte nicht geöffnet werden. Öffne sie über den Startbildschirm."
   },
   "HeartCamera": {
+    "accuracyTitle": "Wie genau ist das?",
+    "accuracyBody": "Es ist eine Schätzung, kein medizinischer Messwert. Wenn du still sitzt und das Signal gut ist, liegt es meist nah an einem von Hand gezählten Puls. Dein Ergebnis zeigt „Gutes Signal“ oder „Mittleres Signal“, damit du weißt, wie sehr du ihm trauen kannst – Bewegung, kalte Finger oder starkes Drücken machen es ungenauer. Für eine medizinische Kontrolle nutze ein richtiges Gerät oder geh zum Arzt.",
     "guideTitle": "So misst du",
     "step4": "Lies dein Ergebnis ab und tippe auf Speichern.",
     "howTitle": "So funktioniert es",
