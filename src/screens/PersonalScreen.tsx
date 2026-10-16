@@ -180,6 +180,8 @@ export default function PersonalScreen() {
   const [formOpen, setFormOpen] = useState(false);
   // Heart rate & BP details (from tapping either tile).
   const [vitalsDetailOpen, setVitalsDetailOpen] = useState(false);
+  // Which tile opened the Heart rate & BP popup — the camera button is for heart rate only.
+  const [vitalsDetailKind, setVitalsDetailKind] = useState<"heart_rate" | "bp">("heart_rate");
   // The Energy tile opens its own popup (score breakdown, earlier days, rest day).
   const [energyDetailOpen, setEnergyDetailOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -479,7 +481,7 @@ export default function PersonalScreen() {
             <AnimatedPressable
               key={kind}
               style={styles.tile}
-              onPress={kind === "energy_level" ? () => setEnergyDetailOpen(true) : opensVitals ? () => setVitalsDetailOpen(true) : undefined}
+              onPress={kind === "energy_level" ? () => setEnergyDetailOpen(true) : opensVitals ? () => { setVitalsDetailKind(kind === "bp" ? "bp" : "heart_rate"); setVitalsDetailOpen(true); } : undefined}
               disabled={!opensPopup}
               accessibilityRole={opensPopup ? "button" : undefined}
               accessibilityLabel={kind === "energy_level" ? t("Personal:energy.openDetailsAriaLabel") : undefined}
@@ -568,10 +570,15 @@ export default function PersonalScreen() {
                 entries={entries}
                 ageBand={ageBand}
                 onChanged={refresh}
-                onMeasure={() => {
-                  setVitalsDetailOpen(false);
-                  navigation.navigate("HeartRateMeasure");
-                }}
+                focus={vitalsDetailKind}
+                onMeasure={
+                  vitalsDetailKind === "heart_rate"
+                    ? () => {
+                        setVitalsDetailOpen(false);
+                        navigation.navigate("HeartRateMeasure");
+                      }
+                    : undefined
+                }
               />
               <AnimatedPressable style={styles.secondaryButton} onPress={() => setVitalsDetailOpen(false)}>
                 <Text style={styles.secondaryButtonText}>{t("Vitals:close")}</Text>

@@ -1076,12 +1076,13 @@
     }
   },
   "Vitals": {
+    "bpHowTo": "Blood pressure can't be measured with the phone camera. Log it by hand with + on the Blood pressure tile, or connect a BP monitor or watch app in Connections & permissions.",
     "close": "Close",
     "parentAvg": "avg {avg}",
     "sectionTitle": "Heart rate & BP",
     "hrCardTitle": "Heart rate · latest synced day",
     "bpHistoryTitle": "Blood pressure · recent",
-    "emptyMobile": "No heart rate or BP synced yet. Connect it in Habits → Health Connect.",
+    "emptyMobile": "No heart rate or BP synced yet. Connect it in Connections & permissions.",
     "deleteHcButton": "Delete Health Connect HR/BP data",
     "title": "Heart rate & blood pressure",
     "subtitle": "From Health Connect — your watch, band or BP monitor app.",

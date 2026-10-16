@@ -1076,12 +1076,13 @@
     }
   },
   "Vitals": {
+    "bpHowTo": "La pressione non si può misurare con la fotocamera del telefono. Inseriscila a mano con + sul riquadro Pressione, oppure collega un misuratore o l'app dell'orologio in Connessioni e permessi.",
     "close": "Chiudi",
     "parentAvg": "media {avg}",
     "sectionTitle": "Frequenza cardiaca e pressione",
     "hrCardTitle": "Frequenza cardiaca · ultimo giorno sincronizzato",
     "bpHistoryTitle": "Pressione · recenti",
-    "emptyMobile": "Nessuna frequenza cardiaca o pressione ancora sincronizzata. Collegala in Abitudini → Health Connect.",
+    "emptyMobile": "Nessuna frequenza cardiaca o pressione ancora sincronizzata. Collegala in Connessioni e permessi.",
     "deleteHcButton": "Elimina i dati FC/pressione di Health Connect",
     "title": "Frequenza cardiaca e pressione",
     "subtitle": "Da Health Connect: l'app del tuo orologio, braccialetto o misuratore di pressione.",

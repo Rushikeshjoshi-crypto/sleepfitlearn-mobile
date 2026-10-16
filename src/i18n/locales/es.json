@@ -1076,12 +1076,13 @@
     }
   },
   "Vitals": {
+    "bpHowTo": "La presión arterial no se puede medir con la cámara del teléfono. Regístrala a mano con + en el recuadro de presión arterial o conecta un tensiómetro o la app de tu reloj en Conexiones y permisos.",
     "close": "Cerrar",
     "parentAvg": "media {avg}",
     "sectionTitle": "Frecuencia cardíaca y presión",
     "hrCardTitle": "Frecuencia cardíaca · último día sincronizado",
     "bpHistoryTitle": "Presión arterial · recientes",
-    "emptyMobile": "Aún no se ha sincronizado frecuencia cardíaca ni presión. Conéctalo en Hábitos → Health Connect.",
+    "emptyMobile": "Aún no se ha sincronizado frecuencia cardíaca ni presión. Conéctalo en Conexiones y permisos.",
     "deleteHcButton": "Eliminar datos de FC/presión de Health Connect",
     "title": "Frecuencia cardíaca y presión arterial",
     "subtitle": "Desde Health Connect: la app de tu reloj, pulsera o tensiómetro.",

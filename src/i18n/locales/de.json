@@ -1076,12 +1076,13 @@
     }
   },
   "Vitals": {
+    "bpHowTo": "Blutdruck lässt sich nicht mit der Handykamera messen. Trag ihn mit + auf der Blutdruck-Kachel von Hand ein oder verbinde ein Blutdruckmessgerät oder eine Uhr-App unter Verbindungen & Berechtigungen.",
     "close": "Schließen",
     "parentAvg": "Ø {avg}",
     "sectionTitle": "Herzfrequenz & Blutdruck",
     "hrCardTitle": "Herzfrequenz · zuletzt synchronisierter Tag",
     "bpHistoryTitle": "Blutdruck · zuletzt",
-    "emptyMobile": "Noch keine Herzfrequenz oder Blutdruck synchronisiert. Verbinde es unter Gewohnheiten → Health Connect.",
+    "emptyMobile": "Noch keine Herzfrequenz oder Blutdruck synchronisiert. Verbinde es unter Verbindungen & Berechtigungen.",
     "deleteHcButton": "Health-Connect-Daten (Herzfrequenz/Blutdruck) löschen",
     "title": "Herzfrequenz & Blutdruck",
     "subtitle": "Aus Health Connect – deine Uhr, dein Band oder deine Blutdruckmessgerät-App.",

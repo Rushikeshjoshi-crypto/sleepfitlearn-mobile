@@ -29,12 +29,16 @@ export function VitalsPersonalSection({
   ageBand,
   onChanged,
   onMeasure,
+  focus,
 }: {
   entries: PersonalEntry[];
   ageBand: AgeBand | null;
   onChanged: () => void;
   // Opens the camera heart rate screen (fingertip over the camera).
   onMeasure?: () => void;
+  // Which tile opened the popup. From the BP tile there's no camera button
+  // (the camera measures heart rate only) — a note says how BP gets in.
+  focus?: "heart_rate" | "bp";
 }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -73,6 +77,7 @@ export function VitalsPersonalSection({
     <View style={styles.card}>
       <Text style={styles.title}>{t("sectionTitle")}</Text>
       {onMeasure && <ModernButton title={`❤️ ${t("HeartCamera:measureButton")}`} onPress={onMeasure} />}
+      {focus === "bp" && <Text style={styles.body}>{t("bpHowTo")}</Text>}
 
       {!hr && bp.length === 0 ? (
         <Text style={styles.body}>{t("emptyMobile")}</Text>

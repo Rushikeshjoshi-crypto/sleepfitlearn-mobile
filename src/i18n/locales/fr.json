@@ -1076,12 +1076,13 @@
     }
   },
   "Vitals": {
+    "bpHowTo": "La tension ne se mesure pas avec la caméra du téléphone. Saisis-la à la main avec + sur la tuile Tension, ou connecte un tensiomètre ou l'appli de ta montre dans Connexions et autorisations.",
     "close": "Fermer",
     "parentAvg": "moy. {avg}",
     "sectionTitle": "Fréquence cardiaque et tension",
     "hrCardTitle": "Fréquence cardiaque · dernier jour synchronisé",
     "bpHistoryTitle": "Tension · récentes",
-    "emptyMobile": "Aucune fréquence cardiaque ni tension synchronisée pour l'instant. Connecte-le dans Habitudes → Health Connect.",
+    "emptyMobile": "Aucune fréquence cardiaque ni tension synchronisée pour l'instant. Connecte-le dans Connexions et autorisations.",
     "deleteHcButton": "Supprimer les données FC/tension de Health Connect",
     "title": "Fréquence cardiaque et tension artérielle",
     "subtitle": "Depuis Health Connect : l'appli de ta montre, de ton bracelet ou de ton tensiomètre.",
