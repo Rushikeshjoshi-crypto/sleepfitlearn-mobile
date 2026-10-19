@@ -4,6 +4,7 @@
     <string name="health_rationale_body">SleepFitLearn reads these from Health Connect, only after you agree in the app:
 
 • Sleep, exercise and weight — to fill in your daily log.
+• Steps — to show your daily step total. Only one total per day is saved, not every reading.
 • Heart rate, resting heart rate and blood pressure — to show your own trends next to the entries you log by hand. For heart rate only a daily summary (lowest, average, highest, resting) is saved, not every reading.
 
 Each reading is saved to your SleepFitLearn account with the name of the app it came from. It is never used for ads or shared with other companies. If you are 13–17 and choose to share personal readings with a linked parent, they can see your latest readings.

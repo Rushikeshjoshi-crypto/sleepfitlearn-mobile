@@ -9,6 +9,7 @@ import {
   type ActivityType,
 } from "../api/fitness";
 import { getGrantedRecordTypes, readExerciseSessions, readSleepSessions, readWeights } from "../native/healthConnect";
+import { syncSteps } from "../steps/sync";
 import { labelForExerciseType } from "./exerciseLabels";
 import { getSyncEnabled } from "./preference";
 import { isBackgroundSyncAllowed } from "../syncGate";
@@ -87,6 +88,9 @@ export function syncHealthConnect(): Promise<void> {
     if (granted.has("SleepSession")) jobs.push(["sleep", () => syncSleep(from, to)]);
     if (granted.has("Weight")) jobs.push(["weight", () => syncWeight(from, to)]);
     if (granted.has("ExerciseSession")) jobs.push(["exercise", () => syncExercise(from, to)]);
+    // Steps upsert their own window of daily totals (lib/steps/sync.ts) —
+    // unlike the rows above, a day's total changes, so it's re-sent.
+    if (granted.has("Steps")) jobs.push(["steps", () => syncSteps()]);
     const results = await Promise.allSettled(jobs.map(([, run]) => run()));
     results.forEach((r, i) => {
       if (r.status === "rejected") console.warn(`Health Connect sync: ${jobs[i][0]} failed`, r.reason);

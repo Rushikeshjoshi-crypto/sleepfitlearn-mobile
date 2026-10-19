@@ -44,6 +44,7 @@ jest.mock("react-native-health-connect", () => ({
   getGrantedPermissions: jest.fn(async () => []),
   requestPermission: jest.fn(async () => []),
   readRecords: jest.fn(async () => ({ records: [] })),
+  aggregateGroupByPeriod: jest.fn(async () => []),
   ExerciseType: { RUNNING: 56, BIKING: 8, WALKING: 79 },
 }));
 

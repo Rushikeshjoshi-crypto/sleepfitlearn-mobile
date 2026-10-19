@@ -29,11 +29,11 @@ test("vitals ask for HeartRate, RestingHeartRate and BloodPressure only — no h
   expect([...granted]).toEqual(["HeartRate"]);
 });
 
-test("the existing Sleep / Exercise / Weight request is unchanged, and doesn't count vitals as granted", async () => {
+test("the Sleep / Exercise / Weight / Steps request has no vitals in it, and doesn't count vitals as granted", async () => {
   hcLib.requestPermission.mockResolvedValue([read("HeartRate")]);
   expect(await hc.requestPermissions()).toBe(false);
   const asked = hcLib.requestPermission.mock.calls[0][0].map((p) => p.recordType).sort();
-  expect(asked).toEqual(["ExerciseSession", "SleepSession", "Weight"]);
+  expect(asked).toEqual(["ExerciseSession", "SleepSession", "Steps", "Weight"]);
 });
 
 test("heart rate: every page is read, samples keep their source app", async () => {

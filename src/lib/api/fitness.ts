@@ -237,6 +237,34 @@ function deleteHealthMetric(sk: string): Promise<void> {
   return apiDelete("fitness", `health/${encodeURIComponent(sk)}`);
 }
 
+// ── Daily steps ─────────────────────────────────────────────────────────────
+// One health_metrics row per local day (sk "{date}#steps"), written only via
+// PUT fitness/steps/{date} — an upsert, so it never makes a second row for a
+// day. A Health Connect write never replaces a day typed in by hand: the
+// server answers { skipped: "manual_entry" } instead.
+export type StepsMeta = {
+  source: "health_connect" | "manual";
+  origins?: string[];
+  tz?: string;
+  synced_at?: string;
+};
+
+export type DailySteps = Omit<HealthMetric, "meta"> & { meta?: StepsMeta | null };
+
+export type UpsertStepsResult = DailySteps | { skipped: "manual_entry"; date: string };
+
+export function upsertDailySteps(date: string, value: number, meta: StepsMeta): Promise<UpsertStepsResult> {
+  return apiPut<UpsertStepsResult>("fitness", `steps/${date}`, { value, meta });
+}
+
+export function listDailySteps(range?: { from: string; to: string }): Promise<DailySteps[]> {
+  return apiGet<DailySteps[]>("fitness", "steps", range);
+}
+
+export function deleteDailySteps(date: string): Promise<void> {
+  return apiDelete("fitness", `steps/${date}`);
+}
+
 // Weight is dual-written to /weights and /health so it shows up both in the
 // dedicated weight endpoint and in the generic health-metric feed — mirrors
 // the web app's behavior exactly (see listPersonalEntries' dedupe below).

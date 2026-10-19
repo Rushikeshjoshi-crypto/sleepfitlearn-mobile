@@ -21,13 +21,38 @@ jest.mock("../src/lib/api/fitness", () => ({
 }));
 jest.mock("../src/lib/healthConnect/preference", () => ({ getSyncEnabled: jest.fn(async () => true) }));
 jest.mock("../src/lib/syncGate", () => ({ isBackgroundSyncAllowed: () => true }));
+jest.mock("../src/lib/steps/sync", () => ({ syncSteps: jest.fn(async () => {}) }));
 
 import * as native from "../src/lib/native/healthConnect";
 import * as sleepApi from "../src/lib/api/sleep";
 import * as fitnessApi from "../src/lib/api/fitness";
+import * as stepsSync from "../src/lib/steps/sync";
 import { syncHealthConnect, syncHealthConnectIfEnabled } from "../src/lib/healthConnect/sync";
 
 const mocked = (fn) => fn;
+
+describe("steps job", () => {
+  beforeEach(() => {
+    mocked(native.readSleepSessions).mockResolvedValue([]);
+  });
+
+  test("runs only when Steps is granted", async () => {
+    await syncHealthConnect();
+    expect(stepsSync.syncSteps).not.toHaveBeenCalled();
+    mocked(native.getGrantedRecordTypes).mockResolvedValueOnce(new Set(["Steps"]));
+    await syncHealthConnect();
+    expect(stepsSync.syncSteps).toHaveBeenCalledTimes(1);
+  });
+
+  test("a failing steps job doesn't stop sleep / exercise / weight", async () => {
+    mocked(native.getGrantedRecordTypes).mockResolvedValueOnce(new Set(["Steps", "Weight"]));
+    mocked(native.readWeights).mockResolvedValueOnce([{ time: "2026-10-06T07:00:00", weightKg: 70 }]);
+    mocked(fitnessApi.createWeightEntry).mockResolvedValue({});
+    mocked(stepsSync.syncSteps).mockRejectedValueOnce(new Error("aggregate failed"));
+    await expect(syncHealthConnect()).resolves.toBeUndefined();
+    expect(fitnessApi.createWeightEntry).toHaveBeenCalledTimes(1);
+  });
+});
 
 beforeEach(() => jest.clearAllMocks());
 

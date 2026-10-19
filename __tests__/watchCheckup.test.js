@@ -5,7 +5,7 @@
 import { buildCheckup } from "../src/lib/watch/checkup";
 import { KNOWN_WATCH_APPS, watchAppName } from "../src/lib/watch/knownApps";
 
-const ALL = new Set(["SleepSession", "ExerciseSession", "Weight", "HeartRate", "RestingHeartRate", "BloodPressure"]);
+const ALL = new Set(["SleepSession", "ExerciseSession", "Weight", "Steps", "HeartRate", "RestingHeartRate", "BloodPressure"]);
 const base = {
   hcAvailable: true,
   granted: ALL,
@@ -31,8 +31,14 @@ test("no Health Connect: only the install step, with the install action", () => 
 test("permission missing → allow action (heart rate / BP only asked when allowed)", () => {
   const c = buildCheckup({ ...base, granted: new Set(["SleepSession"]) });
   expect(byId(c).permission).toEqual({ id: "permission", status: "todo", action: "allow" });
-  const teen = buildCheckup({ ...base, vitalsAllowed: false, granted: new Set(["SleepSession", "ExerciseSession", "Weight"]) });
+  const teen = buildCheckup({ ...base, vitalsAllowed: false, granted: new Set(["SleepSession", "ExerciseSession", "Weight", "Steps"]) });
   expect(byId(teen).permission.status).toBe("ok");
+});
+
+test("Steps is part of the permission set: everything but Steps granted → allow action", () => {
+  const noSteps = new Set([...ALL].filter((t) => t !== "Steps"));
+  const c = buildCheckup({ ...base, granted: noSteps });
+  expect(byId(c).permission).toEqual({ id: "permission", status: "todo", action: "allow" });
 });
 
 test("no known watch app on the phone → info, not an error", () => {
@@ -64,7 +70,7 @@ test("13–17 with the flag off: heart rate / BP writers don't count (they're ne
   const c = buildCheckup({
     ...base,
     vitalsAllowed: false,
-    granted: new Set(["SleepSession", "ExerciseSession", "Weight"]),
+    granted: new Set(["SleepSession", "ExerciseSession", "Weight", "Steps"]),
     writers: { HeartRate: ["com.sec.android.app.shealth"], BloodPressure: [], SleepSession: [] },
   });
   expect(byId(c).data.status).toBe("todo");

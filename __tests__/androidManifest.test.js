@@ -10,6 +10,21 @@ test("manifest declares WAKE_LOCK (needed by the headless screen-time sync)", ()
   expect(manifest).toMatch(/<uses-permission android:name="android\.permission\.WAKE_LOCK"\s*\/>/);
 });
 
+// Steps: read-only daily totals from Health Connect. No background-read or
+// history permission, and no raw sensor (ACTIVITY_RECOGNITION) — Health
+// Connect does the counting.
+test("manifest declares health.READ_STEPS, and no background/history/sensor permission", () => {
+  expect(manifest).toMatch(/<uses-permission android:name="android\.permission\.health\.READ_STEPS"\s*\/>/);
+  expect(manifest).not.toMatch(/WRITE_STEPS|READ_HEALTH_DATA_IN_BACKGROUND|READ_HEALTH_DATA_HISTORY|ACTIVITY_RECOGNITION/);
+});
+
+test("the Health Connect rationale text lists steps (English and Hindi)", () => {
+  const en = fs.readFileSync(path.join(__dirname, "../android/app/src/main/res/values/strings.xml"), "utf8");
+  const hi = fs.readFileSync(path.join(__dirname, "../android/app/src/main/res/values-hi/strings.xml"), "utf8");
+  expect(en).toMatch(/• Steps —/);
+  expect(hi).toMatch(/स्टेप्स/);
+});
+
 // ScreenTimeService starts the headless sync every 20 min whatever the app's
 // state; with allowedInForeground=false React Native threw "Tried to start
 // task ScreenTimeSync while in foreground" and the app crashed while open.

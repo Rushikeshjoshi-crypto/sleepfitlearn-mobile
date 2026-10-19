@@ -9,7 +9,7 @@ import { watchAppSharesKnown } from "./knownApps";
 // Heart rate / BP only count when the account may use them (vitalsAllowed:
 // lib/vitals/eligibility.ts); otherwise only sleep data is looked at.
 
-export const BASE_TYPES = ["SleepSession", "ExerciseSession", "Weight"] as const;
+export const BASE_TYPES = ["SleepSession", "ExerciseSession", "Weight", "Steps"] as const;
 export const VITAL_TYPES = ["HeartRate", "RestingHeartRate", "BloodPressure"] as const;
 
 export type CheckupInput = {

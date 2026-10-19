@@ -15,12 +15,14 @@
          holds a wake lock while it runs; without this the app process crashed. -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- Health Connect: read-only access to sleep/exercise/weight the user
-         already has synced from a health app (Samsung Health, Google Fit, etc).
-         Steps isn't declared or asked for: nothing in the app reads it. -->
+    <!-- Health Connect: read-only access to sleep/exercise/weight/steps the
+         user already has synced from a health app (Samsung Health, Google Fit,
+         etc). Steps are read as daily totals only (lib/steps/sync.ts); on
+         Android 14+ Health Connect also counts the phone's own steps. -->
     <uses-permission android:name="android.permission.health.READ_SLEEP" />
     <uses-permission android:name="android.permission.health.READ_EXERCISE" />
     <uses-permission android:name="android.permission.health.READ_WEIGHT" />
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
     <!-- Heart rate / blood pressure (lib/vitals): asked for separately, only
          after the in-app consent screen, for accounts allowed to share health
          data. No history or background-read permission. -->

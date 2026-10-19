@@ -8,6 +8,7 @@ import {
   readRecords,
   openHealthConnectSettings as openSystemSettings,
   aggregateRecord,
+  aggregateGroupByPeriod,
 } from "react-native-health-connect";
 import type { BloodPressureReading, HeartRateSample, VitalType } from "../vitals/types";
 
@@ -33,12 +34,13 @@ export type HealthConnectWeightSample = {
 // a no-op (matching the module's shape) on other platforms.
 const IS_SUPPORTED = Platform.OS === "android";
 
-// What the sync reads. Steps isn't asked for — nothing in the app reads it.
-// Each one is optional: whichever the user grants is synced, the rest skipped.
+// What the sync reads. Each one is optional: whichever the user grants is
+// synced, the rest skipped. Steps are read as daily totals (readDailySteps).
 const REQUIRED_PERMISSIONS = [
   { accessType: "read" as const, recordType: "SleepSession" as const },
   { accessType: "read" as const, recordType: "ExerciseSession" as const },
   { accessType: "read" as const, recordType: "Weight" as const },
+  { accessType: "read" as const, recordType: "Steps" as const },
 ];
 
 export type SyncedRecordType = (typeof REQUIRED_PERMISSIONS)[number]["recordType"];
@@ -78,7 +80,7 @@ export function openHealthConnectInPlayStore(): void {
   Linking.openURL(marketUrl).catch(() => Linking.openURL(webUrl).catch(() => {}));
 }
 
-// Which of Sleep / Exercise / Weight the user has granted read access to.
+// Which of Sleep / Exercise / Weight / Steps the user has granted read access to.
 export async function getGrantedRecordTypes(): Promise<Set<SyncedRecordType>> {
   if (!IS_SUPPORTED) return new Set();
   if (!(await ensureInitialized())) return new Set();
@@ -92,7 +94,7 @@ export async function hasPermissions(): Promise<boolean> {
 }
 
 // Triggers the Health Connect system permission dialog listing Sleep,
-// Exercise and Weight — true if the user granted at least one of them.
+// Exercise, Weight and Steps — true if the user granted at least one of them.
 export async function requestPermissions(): Promise<boolean> {
   if (!IS_SUPPORTED) return false;
   if (!(await ensureInitialized())) return false;
@@ -127,6 +129,45 @@ export async function readWeights(from: string, to: string): Promise<HealthConne
     time: r.time,
     weightKg: r.weight.inKilograms,
   }));
+}
+
+export type HealthConnectDailySteps = {
+  date: string; // local calendar date, YYYY-MM-DD
+  steps: number;
+  origins: string[];
+};
+
+// Local midnight of a YYYY-MM-DD date, as an ISO instant.
+function localMidnight(date: string): string {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(y, m - 1, d).toISOString();
+}
+
+// One step total per local calendar day, fromDate..toDate (today's bucket
+// runs up to `now`). Health Connect's own aggregation: when several apps or
+// a watch and the phone record the same walk, it counts only the source the
+// user ranks highest in Health Connect — never sum raw StepsRecords (that
+// double-counts). No dataOriginFilter, so that priority applies. The library
+// takes ISO instants and converts them to device-local LocalDateTime itself;
+// each result's startTime is that LocalDateTime ("2026-10-10T00:00"). Days
+// with no data are left out.
+export async function readDailySteps(fromDate: string, toDate: string, now: Date = new Date()): Promise<HealthConnectDailySteps[]> {
+  if (!IS_SUPPORTED) return [];
+  const nextDay = new Date(localMidnight(toDate));
+  nextDay.setDate(nextDay.getDate() + 1);
+  const end = nextDay < now ? nextDay : now;
+  const buckets = await aggregateGroupByPeriod({
+    recordType: "Steps",
+    timeRangeFilter: { operator: "between", startTime: localMidnight(fromDate), endTime: end.toISOString() },
+    timeRangeSlicer: { period: "DAYS", length: 1 },
+  });
+  return buckets
+    .map((b) => ({
+      date: String(b.startTime).slice(0, 10),
+      steps: Math.round(b.result.COUNT_TOTAL ?? 0),
+      origins: b.result.dataOrigins ?? [],
+    }))
+    .filter((d) => d.origins.length > 0 || d.steps > 0);
 }
 
 // ── Heart rate + blood pressure (lib/vitals) ────────────────────────────────

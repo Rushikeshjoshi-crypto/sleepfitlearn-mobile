@@ -10,6 +10,8 @@ export type DailyWorkoutPoint = {
   intensity: "low" | "moderate" | "high" | null;
 };
 export type DailyEnergyPoint = { date: string; day_label: string; value: number | null };
+// steps null = no data that day (not 0 steps).
+export type DailyStepsPoint = { date: string; day_label: string; steps: number | null };
 
 // Insight *text* is computed client-side (see src/lib/insights/insightEngine.ts)
 // from these raw series — the backend only returns data, not blurbs.
@@ -19,6 +21,7 @@ export type WeeklySnapshot = {
   fitness: { workout_days: number; daily: DailyWorkoutPoint[] };
   study: { total_hours: number; daily: DailyMinutesPoint[]; last_logged_at: string | null };
   energy: { daily: DailyEnergyPoint[] };
+  steps: { avg: number | null; today: number | null; daily: DailyStepsPoint[] };
 };
 
 export type Timeline = {
@@ -32,6 +35,7 @@ export type Timeline = {
 // picks the timeline day from it (falling back to IST without it).
 const days = <T>(list: unknown): T[] => (Array.isArray(list) ? list.filter((d) => d && typeof d === "object") : []) as T[];
 const num = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+const numOrNull = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
 // Missing sections, missing daily arrays and null day entries come back as
 // safe defaults, so HomeScreen can read the snapshot without guards.
@@ -43,6 +47,8 @@ export async function getWeeklySnapshot(): Promise<WeeklySnapshot> {
     fitness: { workout_days: num(s.fitness?.workout_days), daily: days<DailyWorkoutPoint>(s.fitness?.daily) },
     study: { total_hours: num(s.study?.total_hours), daily: days<DailyMinutesPoint>(s.study?.daily), last_logged_at: s.study?.last_logged_at ?? null },
     energy: { daily: days<DailyEnergyPoint>(s.energy?.daily) },
+    // An older dashboard Lambda has no steps block → empty, not a crash.
+    steps: { avg: numOrNull(s.steps?.avg), today: numOrNull(s.steps?.today), daily: days<DailyStepsPoint>(s.steps?.daily) },
   };
 }
 

@@ -67,7 +67,7 @@ test("nothing granted: no sync switched on", async () => {
 
 test("checkup loader: asks who wrote data only for types it may read; installed apps from the phone", async () => {
   checkVitalsAccess.mockResolvedValue({ allowed: false, ageBand: "13_17" });
-  hc.getGrantedAllTypes.mockResolvedValue(new Set(["SleepSession", "ExerciseSession", "Weight", "HeartRate"]));
+  hc.getGrantedAllTypes.mockResolvedValue(new Set(["SleepSession", "ExerciseSession", "Weight", "Steps", "HeartRate"]));
   hc.recentWriters.mockResolvedValue(["com.sec.android.app.shealth"]);
   watchApps.installedWatchApps.mockResolvedValue(["com.sec.android.app.shealth"]);
   const c = await loadCheckup();

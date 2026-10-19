@@ -18,10 +18,15 @@ Each type is a separate permission the user can grant or deny.
 | Heart rate | `READ_HEART_RATE` | new |
 | Resting heart rate | `READ_RESTING_HEART_RATE` | new |
 | Blood pressure | `READ_BLOOD_PRESSURE` | new |
+| Steps | `READ_STEPS` | new (step counting) |
 
 - Read access only. The app never writes to Health Connect.
 - No background-read permission and no history permission. Reads happen when
-  the app is open. The first heart rate and BP sync covers the last 30 days.
+  the app is open. The first heart rate, BP and steps sync covers the last 30
+  days.
+- Steps are asked for together with sleep, exercise and weight. On Android 14+
+  Health Connect itself counts the phone's steps once any app holds
+  `READ_STEPS` (the user can turn that off in Health Connect).
 - Heart rate and BP have their own in-app consent screen. Permission is asked
   only after the user agrees.
 
@@ -37,6 +42,10 @@ Each type is a separate permission the user can grant or deny.
   resting, number of readings). Raw samples stay on the phone.
 - **Blood pressure:** each reading (systolic, diastolic, time, body position
   and measurement location if present).
+- **Steps:** one total per local day (Health Connect's own de-duplicated
+  daily total), the device time zone, and the sync time. Raw step records
+  stay on the phone. A day the user types in by hand is never overwritten by
+  the sync.
 - **Source:** the name of the app that wrote each reading (Health Connect's
   `dataOrigin` package).
 - Stored in the user's SleepFitLearn account on AWS (DynamoDB, region
@@ -77,6 +86,11 @@ Each type is a separate permission the user can grant or deny.
 | `READ_HEART_RATE` | Show the user's daily heart rate summary (lowest, average, highest) from their own watch or band next to manual entries, for wellness trends. |
 | `READ_RESTING_HEART_RATE` | Show the user's daily resting heart rate as part of the same summary. |
 | `READ_BLOOD_PRESSURE` | Show blood pressure readings saved by the user's BP monitor or health app next to manual entries, with the source app named. |
+| `READ_STEPS` | Show the user's daily step total and progress toward their own daily step goal, and step trends over weeks and months. Only one total per day is stored. |
+
+Adding `READ_STEPS` changes the declared data types, so the declaration must
+be **resubmitted** (Activity & fitness) and the Data safety form updated
+before a build that asks for steps is released.
 
 Also confirm in the declaration:
 - No advertising use.

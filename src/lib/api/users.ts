@@ -13,6 +13,9 @@ export type UserProfile = {
   date_of_birth: string | null;
   height_cm: number | null;
   target_weight_kg: number | null;
+  // Optional daily steps target (1,000–50,000); null = not set. Older
+  // profiles don't have the field at all.
+  daily_step_goal?: number | null;
   preferred_language: string | null;
   privacy_settings: Record<string, unknown> | null;
   subscription_status: string | null;
@@ -54,6 +57,7 @@ type EditableUserFields = Pick<
   | "date_of_birth"
   | "height_cm"
   | "target_weight_kg"
+  | "daily_step_goal"
   | "preferred_language"
   | "privacy_settings"
   | "country_code"
@@ -116,6 +120,7 @@ export async function updateUserProfile(partial: Partial<EditableUserFields>): P
     date_of_birth: current.date_of_birth,
     height_cm: current.height_cm,
     target_weight_kg: current.target_weight_kg,
+    daily_step_goal: current.daily_step_goal ?? null,
     preferred_language: current.preferred_language,
     privacy_settings: current.privacy_settings,
     country_code: current.country_code,
