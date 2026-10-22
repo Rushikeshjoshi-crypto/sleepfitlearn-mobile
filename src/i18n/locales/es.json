@@ -534,10 +534,10 @@
     "hcNotInstalledBody": "Health Connect no está disponible en este dispositivo. Instálalo desde Play Store y vuelve aquí para conectarlo.",
     "openPlayStore": "Abrir Play Store",
     "hcConnectTitle": "Conectar Health Connect",
-    "hcConnectBody": "SleepFitLearn leerá los datos de sueño, ejercicio y peso que una app de salud como Samsung Health o Google Fit ya haya sincronizado con Health Connect en tu dispositivo. Es solo lectura y no tocará ningún día que ya hayas registrado tú.",
+    "hcConnectBody": "SleepFitLearn leerá los datos de sueño, ejercicio, peso y los totales diarios de pasos que una app de salud como Samsung Health o Google Fit ya haya sincronizado con Health Connect en tu dispositivo. Es solo lectura y no tocará ningún día que ya hayas registrado tú.",
     "hcPermissionDeniedTitle": "Permiso no concedido",
     "hcPermissionDeniedBody": "Se rechazó el acceso a Health Connect. Puedes intentarlo de nuevo cuando quieras desde esta pantalla.",
-    "hcCardSubtitle": "Lee el sueño, el ejercicio y el peso ya sincronizados desde apps como Samsung Health o Google Fit.",
+    "hcCardSubtitle": "Lee el sueño, el ejercicio, el peso y los pasos diarios ya sincronizados desde apps como Samsung Health o Google Fit.",
     "hcNotInstalledHint": "Health Connect no está instalado en este dispositivo. Al activarlo, te pediremos instalarlo desde Play Store.",
     "hcNoDataHint": "Conecta una app de salud como Samsung Health o Google Fit para ver datos aquí.",
     "usageNotGrantedTitle": "Acceso de uso no concedido",
@@ -565,7 +565,9 @@
     "addTaskTitle": "Añadir una tarea de rutina",
     "valueRequiredTitle": "Valor obligatorio",
     "enterAdherence": "Introduce tu % de cumplimiento.",
-    "enterMinutes": "Introduce los minutos."
+    "enterMinutes": "Introduce los minutos.",
+    "hcConnectBodyNoSteps": "SleepFitLearn leerá los datos de sueño, ejercicio y peso que una app de salud como Samsung Health o Google Fit ya haya sincronizado con Health Connect en tu dispositivo. Es solo lectura y no tocará ningún día que ya hayas registrado tú.",
+    "hcCardSubtitleNoSteps": "Lee el sueño, el ejercicio y el peso ya sincronizados desde apps como Samsung Health o Google Fit."
   },
   "Trends": {
     "hcDailyAvg": "Media diaria (Health Connect)",

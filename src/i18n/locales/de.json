@@ -534,10 +534,10 @@
     "hcNotInstalledBody": "Health Connect ist auf diesem Gerät nicht verfügbar. Installiere es aus dem Play Store und komm dann zurück, um es zu verbinden.",
     "openPlayStore": "Play Store öffnen",
     "hcConnectTitle": "Health Connect verbinden",
-    "hcConnectBody": "SleepFitLearn liest Schlaf-, Sport- und Gewichtsdaten, die eine Gesundheits-App wie Samsung Health oder Google Fit bereits mit Health Connect auf deinem Gerät synchronisiert hat. Der Zugriff ist schreibgeschützt, und Tage, die du selbst schon erfasst hast, bleiben unverändert.",
+    "hcConnectBody": "SleepFitLearn liest Schlaf-, Sport- und Gewichtsdaten sowie tägliche Schrittsummen, die eine Gesundheits-App wie Samsung Health oder Google Fit bereits mit Health Connect auf deinem Gerät synchronisiert hat. Der Zugriff ist schreibgeschützt, und Tage, die du selbst schon erfasst hast, bleiben unverändert.",
     "hcPermissionDeniedTitle": "Berechtigung nicht erteilt",
     "hcPermissionDeniedBody": "Der Zugriff auf Health Connect wurde abgelehnt. Du kannst es jederzeit auf diesem Bildschirm erneut versuchen.",
-    "hcCardSubtitle": "Liest Schlaf, Sport und Gewicht, die bereits von Apps wie Samsung Health oder Google Fit synchronisiert wurden.",
+    "hcCardSubtitle": "Liest Schlaf, Sport, Gewicht und tägliche Schritte, die bereits von Apps wie Samsung Health oder Google Fit synchronisiert wurden.",
     "hcNotInstalledHint": "Health Connect ist auf diesem Gerät nicht installiert. Beim Aktivieren wirst du aufgefordert, es aus dem Play Store zu installieren.",
     "hcNoDataHint": "Verbinde eine Gesundheits-App wie Samsung Health oder Google Fit, um hier Daten zu sehen.",
     "usageNotGrantedTitle": "Nutzungszugriff nicht erteilt",
@@ -565,7 +565,9 @@
     "addTaskTitle": "Routine-Aufgabe hinzufügen",
     "valueRequiredTitle": "Wert erforderlich",
     "enterAdherence": "Gib deine Einhaltung in % ein.",
-    "enterMinutes": "Gib die Minuten ein."
+    "enterMinutes": "Gib die Minuten ein.",
+    "hcConnectBodyNoSteps": "SleepFitLearn liest Schlaf-, Sport- und Gewichtsdaten, die eine Gesundheits-App wie Samsung Health oder Google Fit bereits mit Health Connect auf deinem Gerät synchronisiert hat. Der Zugriff ist schreibgeschützt, und Tage, die du selbst schon erfasst hast, bleiben unverändert.",
+    "hcCardSubtitleNoSteps": "Liest Schlaf, Sport und Gewicht, die bereits von Apps wie Samsung Health oder Google Fit synchronisiert wurden."
   },
   "Trends": {
     "hcDailyAvg": "Tagesdurchschnitt (Health Connect)",

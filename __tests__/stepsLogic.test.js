@@ -268,3 +268,27 @@ describe("Connections no-data hint and rationale comment", () => {
     expect(typeof require("../src/lib/steps/sync").deleteSyncedSteps).toBe("function");
   });
 });
+
+describe("Health Connect texts (Connections)", () => {
+  const LANGS = ["en", "fr", "de", "it", "es", "hi", "bn"];
+  const KEYS = ["hcConnectBody", "hcCardSubtitle", "hcConnectBodyNoSteps", "hcCardSubtitleNoSteps"];
+
+  test("all four keys in all 7 languages; the steps versions differ from the no-steps ones", () => {
+    for (const lang of LANGS) {
+      const h = require(`../src/i18n/locales/${lang}.json`).Habits;
+      for (const k of KEYS) expect([lang, k, typeof h[k] === "string" && h[k].length > 0]).toEqual([lang, k, true]);
+      expect([lang, h.hcConnectBody !== h.hcConnectBodyNoSteps, h.hcCardSubtitle !== h.hcCardSubtitleNoSteps]).toEqual([lang, true, true]);
+    }
+    const en = require("../src/i18n/locales/en.json").Habits;
+    expect(en.hcConnectBody).toMatch(/step/i);
+    expect(en.hcCardSubtitle).toMatch(/step/i);
+    expect(en.hcConnectBodyNoSteps).not.toMatch(/step/i);
+    expect(en.hcCardSubtitleNoSteps).not.toMatch(/step/i);
+  });
+
+  test("Connections picks the text by the steps rule", () => {
+    const src = require("fs").readFileSync(require("path").join(__dirname, "..", "src", "screens", "ConnectionsScreen.tsx"), "utf8");
+    expect(src).toMatch(/stepsAllowed \? "Habits:hcConnectBody" : "Habits:hcConnectBodyNoSteps"/);
+    expect(src).toMatch(/stepsAllowed \? "Habits:hcCardSubtitle" : "Habits:hcCardSubtitleNoSteps"/);
+  });
+});

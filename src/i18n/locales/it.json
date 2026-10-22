@@ -534,10 +534,10 @@
     "hcNotInstalledBody": "Health Connect non è disponibile su questo dispositivo. Installalo dal Play Store, poi torna qui per collegarlo.",
     "openPlayStore": "Apri Play Store",
     "hcConnectTitle": "Collega Health Connect",
-    "hcConnectBody": "SleepFitLearn leggerà i dati di sonno, esercizio e peso che un'app per la salute come Samsung Health o Google Fit ha già sincronizzato con Health Connect sul tuo dispositivo. È di sola lettura, e i giorni che hai già registrato tu non verranno toccati.",
+    "hcConnectBody": "SleepFitLearn leggerà i dati di sonno, esercizio, peso e i totali giornalieri dei passi che un'app per la salute come Samsung Health o Google Fit ha già sincronizzato con Health Connect sul tuo dispositivo. È di sola lettura, e i giorni che hai già registrato tu non verranno toccati.",
     "hcPermissionDeniedTitle": "Autorizzazione non concessa",
     "hcPermissionDeniedBody": "L'accesso a Health Connect è stato rifiutato. Puoi riprovare quando vuoi da questa schermata.",
-    "hcCardSubtitle": "Legge sonno, esercizio e peso già sincronizzati da app come Samsung Health o Google Fit.",
+    "hcCardSubtitle": "Legge sonno, esercizio, peso e passi giornalieri già sincronizzati da app come Samsung Health o Google Fit.",
     "hcNotInstalledHint": "Health Connect non è installato su questo dispositivo. Attivandolo ti verrà chiesto di installarlo dal Play Store.",
     "hcNoDataHint": "Collega un'app per la salute come Samsung Health o Google Fit per vedere i dati qui.",
     "usageNotGrantedTitle": "Accesso all'utilizzo non concesso",
@@ -565,7 +565,9 @@
     "addTaskTitle": "Aggiungi un'attività di routine",
     "valueRequiredTitle": "Valore obbligatorio",
     "enterAdherence": "Inserisci la tua aderenza in %.",
-    "enterMinutes": "Inserisci i minuti."
+    "enterMinutes": "Inserisci i minuti.",
+    "hcConnectBodyNoSteps": "SleepFitLearn leggerà i dati di sonno, esercizio e peso che un'app per la salute come Samsung Health o Google Fit ha già sincronizzato con Health Connect sul tuo dispositivo. È di sola lettura, e i giorni che hai già registrato tu non verranno toccati.",
+    "hcCardSubtitleNoSteps": "Legge sonno, esercizio e peso già sincronizzati da app come Samsung Health o Google Fit."
   },
   "Trends": {
     "hcDailyAvg": "Media giornaliera (Health Connect)",

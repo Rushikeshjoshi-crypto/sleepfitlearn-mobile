@@ -22,6 +22,7 @@ import {
   requestPermissions as requestHealthConnectPermissions,
 } from "../lib/native/healthConnect";
 import { checkStepsAllowed } from "../lib/steps/access";
+import { useStepsAllowed } from "../lib/steps/useStepsAllowed";
 import { isoDaysAgo, todayISO } from "../lib/dateRange";
 import { getSyncEnabled as getHealthConnectSyncEnabled, setSyncEnabled as setHealthConnectSyncEnabled } from "../lib/healthConnect/preference";
 import { syncHealthConnect } from "../lib/healthConnect/sync";
@@ -38,6 +39,8 @@ export default function ConnectionsScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation(["Habits", "Common"]);
+  // Health Connect texts mention steps only for accounts that may use them.
+  const stepsAllowed = useStepsAllowed();
 
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -140,7 +143,7 @@ export default function ConnectionsScreen() {
 
     Alert.alert(
       t("Habits:hcConnectTitle"),
-      t("Habits:hcConnectBody"),
+      t(stepsAllowed ? "Habits:hcConnectBody" : "Habits:hcConnectBodyNoSteps"),
       [
         { text: t("Common:cancel"), style: "cancel" },
         {
@@ -291,7 +294,7 @@ export default function ConnectionsScreen() {
         <View style={styles.toggleRow}>
           <View style={styles.toggleLabel}>
             <Text style={styles.toggleTitle}>{t("Habits:hcConnectTitle")}</Text>
-            <Text style={styles.toggleSubtitle}>{t("Habits:hcCardSubtitle")}</Text>
+            <Text style={styles.toggleSubtitle}>{t(stepsAllowed ? "Habits:hcCardSubtitle" : "Habits:hcCardSubtitleNoSteps")}</Text>
           </View>
           {hcBusy ? (
             <ActivityIndicator color={colors.navTint} />

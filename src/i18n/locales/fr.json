@@ -534,10 +534,10 @@
     "hcNotInstalledBody": "Health Connect n'est pas disponible sur cet appareil. Installe-le depuis le Play Store, puis reviens ici pour le connecter.",
     "openPlayStore": "Ouvrir le Play Store",
     "hcConnectTitle": "Connecter Health Connect",
-    "hcConnectBody": "SleepFitLearn lira les données de sommeil, d'exercice et de poids qu'une appli de santé comme Samsung Health ou Google Fit a déjà synchronisées avec Health Connect sur ton appareil. C'est en lecture seule, et les jours que tu as déjà saisis toi-même ne seront pas modifiés.",
+    "hcConnectBody": "SleepFitLearn lira les données de sommeil, d'exercice, de poids et les totaux de pas quotidiens qu'une appli de santé comme Samsung Health ou Google Fit a déjà synchronisés avec Health Connect sur ton appareil. C'est en lecture seule, et les jours que tu as déjà saisis toi-même ne seront pas modifiés.",
     "hcPermissionDeniedTitle": "Autorisation non accordée",
     "hcPermissionDeniedBody": "L'accès à Health Connect a été refusé. Tu peux réessayer à tout moment depuis cet écran.",
-    "hcCardSubtitle": "Lit le sommeil, l'exercice et le poids déjà synchronisés depuis des applis comme Samsung Health ou Google Fit.",
+    "hcCardSubtitle": "Lit le sommeil, l'exercice, le poids et les pas quotidiens déjà synchronisés depuis des applis comme Samsung Health ou Google Fit.",
     "hcNotInstalledHint": "Health Connect n'est pas installé sur cet appareil. En l'activant, tu seras invité à l'installer depuis le Play Store.",
     "hcNoDataHint": "Connecte une appli de santé comme Samsung Health ou Google Fit pour voir des données ici.",
     "usageNotGrantedTitle": "Accès à l'utilisation non accordé",
@@ -565,7 +565,9 @@
     "addTaskTitle": "Ajouter une tâche de routine",
     "valueRequiredTitle": "Valeur requise",
     "enterAdherence": "Saisis ton taux de suivi en %.",
-    "enterMinutes": "Saisis les minutes."
+    "enterMinutes": "Saisis les minutes.",
+    "hcConnectBodyNoSteps": "SleepFitLearn lira les données de sommeil, d'exercice et de poids qu'une appli de santé comme Samsung Health ou Google Fit a déjà synchronisées avec Health Connect sur ton appareil. C'est en lecture seule, et les jours que tu as déjà saisis toi-même ne seront pas modifiés.",
+    "hcCardSubtitleNoSteps": "Lit le sommeil, l'exercice et le poids déjà synchronisés depuis des applis comme Samsung Health ou Google Fit."
   },
   "Trends": {
     "hcDailyAvg": "Moyenne quotidienne (Health Connect)",

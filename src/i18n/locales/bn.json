@@ -534,10 +534,10 @@
     "hcNotInstalledBody": "এই ডিভাইসে Health Connect পাওয়া যাচ্ছে না। Play Store থেকে এটি ইনস্টল করুন, তারপর কানেক্ট করতে এখানে ফিরে আসুন।",
     "openPlayStore": "Play Store খুলুন",
     "hcConnectTitle": "Health Connect কানেক্ট করুন",
-    "hcConnectBody": "Samsung Health বা Google Fit-এর মতো কোনো হেলথ অ্যাপ আপনার ডিভাইসের Health Connect-এ যে ঘুম, ব্যায়াম ও ওজনের ডেটা আগেই সিঙ্ক করেছে, SleepFitLearn তা পড়বে। এটি শুধু পড়ার জন্য, এবং যে দিনের ডেটা আপনি নিজে লগ করেছেন তা পরিবর্তন করা হবে না।",
+    "hcConnectBody": "Samsung Health বা Google Fit-এর মতো কোনো হেলথ অ্যাপ আপনার ডিভাইসের Health Connect-এ যে ঘুম, ব্যায়াম, ওজন ও দৈনিক মোট পদক্ষেপের ডেটা আগেই সিঙ্ক করেছে, SleepFitLearn তা পড়বে। এটি শুধু পড়ার জন্য, এবং যে দিনের ডেটা আপনি নিজে লগ করেছেন তা পরিবর্তন করা হবে না।",
     "hcPermissionDeniedTitle": "অনুমতি দেওয়া হয়নি",
     "hcPermissionDeniedBody": "Health Connect-এর অ্যাক্সেস প্রত্যাখ্যান করা হয়েছে। আপনি এই স্ক্রিন থেকে যেকোনো সময় আবার চেষ্টা করতে পারেন।",
-    "hcCardSubtitle": "Samsung Health বা Google Fit-এর মতো অ্যাপ থেকে আগেই সিঙ্ক হওয়া ঘুম, ব্যায়াম ও ওজনের তথ্য পড়ে।",
+    "hcCardSubtitle": "Samsung Health বা Google Fit-এর মতো অ্যাপ থেকে আগেই সিঙ্ক হওয়া ঘুম, ব্যায়াম, ওজন ও দৈনিক পদক্ষেপের তথ্য পড়ে।",
     "hcNotInstalledHint": "এই ডিভাইসে Health Connect ইনস্টল করা নেই। এটি চালু করলে Play Store থেকে ইনস্টল করতে বলা হবে।",
     "hcNoDataHint": "এখানে ডেটা দেখতে Samsung Health বা Google Fit-এর মতো একটি হেলথ অ্যাপ কানেক্ট করুন।",
     "usageNotGrantedTitle": "Usage access দেওয়া হয়নি",
@@ -565,7 +565,9 @@
     "addTaskTitle": "রুটিন টাস্ক যোগ করুন",
     "valueRequiredTitle": "মান আবশ্যক",
     "enterAdherence": "আপনার অনুসরণের % লিখুন।",
-    "enterMinutes": "মিনিট লিখুন।"
+    "enterMinutes": "মিনিট লিখুন।",
+    "hcConnectBodyNoSteps": "Samsung Health বা Google Fit-এর মতো কোনো হেলথ অ্যাপ আপনার ডিভাইসের Health Connect-এ যে ঘুম, ব্যায়াম ও ওজনের ডেটা আগেই সিঙ্ক করেছে, SleepFitLearn তা পড়বে। এটি শুধু পড়ার জন্য, এবং যে দিনের ডেটা আপনি নিজে লগ করেছেন তা পরিবর্তন করা হবে না।",
+    "hcCardSubtitleNoSteps": "Samsung Health বা Google Fit-এর মতো অ্যাপ থেকে আগেই সিঙ্ক হওয়া ঘুম, ব্যায়াম ও ওজনের তথ্য পড়ে।"
   },
   "Trends": {
     "hcDailyAvg": "দৈনিক গড় (Health Connect)",

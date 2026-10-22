@@ -534,10 +534,10 @@
     "hcNotInstalledBody": "इस डिवाइस पर Health Connect उपलब्ध नहीं है। इसे Play Store से इंस्टॉल करें, फिर इसे कनेक्ट करने के लिए यहाँ वापस आएँ।",
     "openPlayStore": "Play Store खोलें",
     "hcConnectTitle": "Health Connect कनेक्ट करें",
-    "hcConnectBody": "SleepFitLearn आपके डिवाइस पर Health Connect में Samsung Health या Google Fit जैसे हेल्थ ऐप द्वारा पहले से सिंक किया गया नींद, व्यायाम और वज़न का डेटा पढ़ेगा। यह केवल पढ़ने के लिए है, और जिस दिन का डेटा आपने खुद लॉग किया है उसे छुआ नहीं जाएगा।",
+    "hcConnectBody": "SleepFitLearn आपके डिवाइस पर Health Connect में Samsung Health या Google Fit जैसे हेल्थ ऐप द्वारा पहले से सिंक किया गया नींद, व्यायाम, वज़न और रोज़ के कुल कदमों का डेटा पढ़ेगा। यह केवल पढ़ने के लिए है, और जिस दिन का डेटा आपने खुद लॉग किया है उसे छुआ नहीं जाएगा।",
     "hcPermissionDeniedTitle": "अनुमति नहीं मिली",
     "hcPermissionDeniedBody": "Health Connect का एक्सेस अस्वीकार कर दिया गया। आप इस स्क्रीन से कभी भी दोबारा कोशिश कर सकते हैं।",
-    "hcCardSubtitle": "Samsung Health या Google Fit जैसे ऐप से पहले से सिंक हुई नींद, व्यायाम और वज़न की जानकारी पढ़ता है।",
+    "hcCardSubtitle": "Samsung Health या Google Fit जैसे ऐप से पहले से सिंक हुई नींद, व्यायाम, वज़न और रोज़ के कदमों की जानकारी पढ़ता है।",
     "hcNotInstalledHint": "इस डिवाइस पर Health Connect इंस्टॉल नहीं है। इसे चालू करने पर आपसे इसे Play Store से इंस्टॉल करने को कहा जाएगा।",
     "hcNoDataHint": "यहाँ डेटा देखने के लिए Samsung Health या Google Fit जैसा हेल्थ ऐप कनेक्ट करें।",
     "usageNotGrantedTitle": "Usage access नहीं मिला",
@@ -565,7 +565,9 @@
     "addTaskTitle": "रूटीन टास्क जोड़ें",
     "valueRequiredTitle": "मान आवश्यक है",
     "enterAdherence": "अपना पालन % दर्ज करें।",
-    "enterMinutes": "मिनट दर्ज करें।"
+    "enterMinutes": "मिनट दर्ज करें।",
+    "hcConnectBodyNoSteps": "SleepFitLearn आपके डिवाइस पर Health Connect में Samsung Health या Google Fit जैसे हेल्थ ऐप द्वारा पहले से सिंक किया गया नींद, व्यायाम और वज़न का डेटा पढ़ेगा। यह केवल पढ़ने के लिए है, और जिस दिन का डेटा आपने खुद लॉग किया है उसे छुआ नहीं जाएगा।",
+    "hcCardSubtitleNoSteps": "Samsung Health या Google Fit जैसे ऐप से पहले से सिंक हुई नींद, व्यायाम और वज़न की जानकारी पढ़ता है।"
   },
   "Trends": {
     "hcDailyAvg": "रोज़ का औसत (Health Connect)",

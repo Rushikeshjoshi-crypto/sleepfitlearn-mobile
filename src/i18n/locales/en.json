@@ -534,10 +534,10 @@
     "hcNotInstalledBody": "Health Connect isn't available on this device. Install it from the Play Store, then come back here to connect it.",
     "openPlayStore": "Open Play Store",
     "hcConnectTitle": "Connect Health Connect",
-    "hcConnectBody": "SleepFitLearn will read sleep, exercise, and weight data that a health app like Samsung Health or Google Fit has already synced to Health Connect on your device. This is read-only, and any day you've already logged yourself won't be touched.",
+    "hcConnectBody": "SleepFitLearn will read sleep, exercise, weight, and daily step totals that a health app like Samsung Health or Google Fit has already synced to Health Connect on your device. This is read-only, and any day you've already logged yourself won't be touched.",
     "hcPermissionDeniedTitle": "Permission not granted",
     "hcPermissionDeniedBody": "Health Connect access was declined. You can try again any time from this screen.",
-    "hcCardSubtitle": "Reads sleep, exercise & weight already synced from apps like Samsung Health or Google Fit.",
+    "hcCardSubtitle": "Reads sleep, exercise, weight & daily steps already synced from apps like Samsung Health or Google Fit.",
     "hcNotInstalledHint": "Health Connect isn't installed on this device. Turning this on will prompt you to install it from the Play Store.",
     "hcNoDataHint": "Connect a health app like Samsung Health or Google Fit to see data here.",
     "usageNotGrantedTitle": "Usage access not granted",
@@ -565,7 +565,9 @@
     "addTaskTitle": "Add a routine task",
     "valueRequiredTitle": "Value required",
     "enterAdherence": "Enter your adherence %.",
-    "enterMinutes": "Enter minutes."
+    "enterMinutes": "Enter minutes.",
+    "hcConnectBodyNoSteps": "SleepFitLearn will read sleep, exercise, and weight data that a health app like Samsung Health or Google Fit has already synced to Health Connect on your device. This is read-only, and any day you've already logged yourself won't be touched.",
+    "hcCardSubtitleNoSteps": "Reads sleep, exercise & weight already synced from apps like Samsung Health or Google Fit."
   },
   "Trends": {
     "hcDailyAvg": "Daily average (Health Connect)",
