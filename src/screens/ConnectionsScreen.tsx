@@ -15,12 +15,14 @@ import {
   isAvailable as isHealthConnectAvailable,
   hasPermissions as hasHealthConnectPermissions,
   openHealthConnectInPlayStore,
+  readDailySteps,
   readExerciseSessions,
   readSleepSessions,
   readWeights,
   requestPermissions as requestHealthConnectPermissions,
 } from "../lib/native/healthConnect";
 import { checkStepsAllowed } from "../lib/steps/access";
+import { isoDaysAgo, todayISO } from "../lib/dateRange";
 import { getSyncEnabled as getHealthConnectSyncEnabled, setSyncEnabled as setHealthConnectSyncEnabled } from "../lib/healthConnect/preference";
 import { syncHealthConnect } from "../lib/healthConnect/sync";
 import { VitalsSection } from "../components/vitals/VitalsSection";
@@ -62,15 +64,20 @@ export default function ConnectionsScreen() {
   // getGrantedPermissions() can still read back stale (empty) results, which
   // was making the just-connected state show neither data nor the
   // empty-state message.
+  // Each type is read on its own (a type that isn't granted throws and
+  // counts as nothing), so a user who granted only Steps isn't told "no data".
+  // Steps only for accounts that may use them.
   const refreshHealthConnectDataPreview = useCallback(async () => {
     const to = new Date().toISOString();
     const from = new Date(Date.now() - 7 * 86_400_000).toISOString();
-    const [sleep, exercise, weight] = await Promise.all([
-      readSleepSessions(from, to),
-      readExerciseSessions(from, to),
-      readWeights(from, to),
+    const none = () => [] as unknown[];
+    const [sleep, exercise, weight, steps] = await Promise.all([
+      readSleepSessions(from, to).catch(none),
+      readExerciseSessions(from, to).catch(none),
+      readWeights(from, to).catch(none),
+      checkStepsAllowed().then((ok) => (ok ? readDailySteps(isoDaysAgo(7), todayISO()).catch(none) : [])),
     ]);
-    setHcHasData(sleep.length + exercise.length + weight.length > 0);
+    setHcHasData(sleep.length + exercise.length + weight.length + steps.length > 0);
   }, []);
 
   const refreshHealthConnect = useCallback(async () => {

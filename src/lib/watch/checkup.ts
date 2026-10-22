@@ -23,8 +23,9 @@ export type CheckupInput = {
   stepsAllowed?: boolean;
   // Known watch apps installed on the phone (lib/watch/knownApps.ts).
   installed: string[];
-  // Apps that wrote each type into Health Connect in the last 30 days.
-  writers: { HeartRate: string[]; BloodPressure: string[]; SleepSession: string[] };
+  // Apps that wrote each type into Health Connect in the last 30 days
+  // (Steps only looked at when steps are allowed).
+  writers: { HeartRate: string[]; BloodPressure: string[]; SleepSession: string[]; Steps?: string[] };
 };
 
 export type CheckupStep =
@@ -48,9 +49,11 @@ export function buildCheckup(input: CheckupInput): Checkup {
   const allGranted = neededTypes(input.vitalsAllowed, input.stepsAllowed ?? input.vitalsAllowed).every((t) => input.granted.has(t));
   steps.push({ id: "permission", status: allGranted ? "ok" : "todo", action: allGranted ? null : "allow" });
 
+  const stepsAllowed = input.stepsAllowed ?? input.vitalsAllowed;
   const writers = [
     ...new Set([
       ...input.writers.SleepSession,
+      ...(stepsAllowed ? (input.writers.Steps ?? []) : []),
       ...(input.vitalsAllowed ? [...input.writers.HeartRate, ...input.writers.BloodPressure] : []),
     ]),
   ].filter(Boolean).sort();

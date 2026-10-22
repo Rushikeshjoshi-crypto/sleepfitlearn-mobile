@@ -247,3 +247,24 @@ describe("compact labels without Intl compact support (some Hermes builds)", () 
     }
   });
 });
+
+describe("Connections no-data hint and rationale comment", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const read = (...p) => fs.readFileSync(path.join(__dirname, "..", ...p), "utf8");
+
+  test("no-data hint counts Steps (read on its own, only when allowed), each type failing alone", () => {
+    const src = read("src", "screens", "ConnectionsScreen.tsx");
+    expect(src).toMatch(/checkStepsAllowed\(\)\.then\(\(ok\) => \(ok \? readDailySteps\(/);
+    expect(src).toMatch(/readSleepSessions\(from, to\)\.catch\(none\)/);
+    expect(src).toMatch(/sleep\.length \+ exercise\.length \+ weight\.length \+ steps\.length > 0/);
+  });
+
+  test("the rationale activity's comment lists steps", () => {
+    expect(read("android", "app", "src", "main", "java", "com", "com.sleepfitlearn.mobile", "HealthPermissionsRationaleActivity.kt")).toMatch(/steps as daily/);
+  });
+
+  test("deleteSyncedSteps stays available (no button is added for it)", () => {
+    expect(typeof require("../src/lib/steps/sync").deleteSyncedSteps).toBe("function");
+  });
+});

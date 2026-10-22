@@ -291,7 +291,7 @@ export async function getGrantedAllTypes(): Promise<Set<string>> {
 // only — no records are read). Needs read permission for the type; any error
 // counts as "nobody".
 export async function recentWriters(
-  recordType: "HeartRate" | "BloodPressure" | "SleepSession",
+  recordType: "HeartRate" | "BloodPressure" | "SleepSession" | "Steps",
   from: string,
   to: string,
 ): Promise<string[]> {

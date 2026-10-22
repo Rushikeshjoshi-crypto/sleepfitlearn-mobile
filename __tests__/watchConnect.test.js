@@ -76,6 +76,14 @@ test("checkup loader: asks who wrote data only for types it may read; installed 
   expect(c.ready).toBe(true);
 });
 
+test("checkup loader, adult: Steps writers are asked for too", async () => {
+  checkVitalsAccess.mockResolvedValue({ allowed: true, ageBand: "18_plus" });
+  hc.getGrantedAllTypes.mockResolvedValue(new Set(["SleepSession", "Steps", "HeartRate", "BloodPressure"]));
+  hc.recentWriters.mockResolvedValue([]);
+  await loadCheckup();
+  expect(hc.recentWriters.mock.calls.map((x) => x[0]).sort()).toEqual(["BloodPressure", "HeartRate", "SleepSession", "Steps"]);
+});
+
 test("no Health Connect: the loader stops at the first step", async () => {
   checkVitalsAccess.mockResolvedValue({ allowed: true, ageBand: "18_plus" });
   hc.isAvailable.mockResolvedValueOnce(false);

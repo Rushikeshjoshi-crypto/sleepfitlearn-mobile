@@ -17,13 +17,15 @@ export async function loadCheckup(now: Date = new Date()): Promise<Checkup> {
   const [granted, installed] = await Promise.all([getGrantedAllTypes(), installedWatchApps(KNOWN_WATCH_PACKAGES)]);
   const from = new Date(now.getTime() - LOOKBACK_DAYS * 86_400_000).toISOString();
   const to = now.toISOString();
-  const may = (t: "HeartRate" | "BloodPressure" | "SleepSession") =>
+  // Steps follow the same rule as heart rate / BP (lib/steps/access.ts).
+  const may = (t: "HeartRate" | "BloodPressure" | "SleepSession" | "Steps") =>
     granted.has(t) && (t === "SleepSession" || access.allowed);
-  const writersOf = async (t: "HeartRate" | "BloodPressure" | "SleepSession") => (may(t) ? recentWriters(t, from, to) : []);
-  const [HeartRate, BloodPressure, SleepSession] = [
+  const writersOf = async (t: "HeartRate" | "BloodPressure" | "SleepSession" | "Steps") => (may(t) ? recentWriters(t, from, to) : []);
+  const [HeartRate, BloodPressure, SleepSession, Steps] = [
     await writersOf("HeartRate"),
     await writersOf("BloodPressure"),
     await writersOf("SleepSession"),
+    await writersOf("Steps"),
   ];
-  return buildCheckup({ hcAvailable: true, granted, vitalsAllowed: access.allowed, stepsAllowed: access.allowed, installed, writers: { HeartRate, BloodPressure, SleepSession } });
+  return buildCheckup({ hcAvailable: true, granted, vitalsAllowed: access.allowed, stepsAllowed: access.allowed, installed, writers: { HeartRate, BloodPressure, SleepSession, Steps } });
 }

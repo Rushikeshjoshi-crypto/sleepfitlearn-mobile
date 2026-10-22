@@ -86,3 +86,11 @@ test("known apps have names; unknown packages fall back to the package", () => {
   expect(watchAppName("com.sec.android.app.shealth")).toBe("Samsung Health");
   expect(watchAppName("com.x.y")).toBe("com.x.y");
 });
+
+test("Steps writers count when steps are allowed, and are ignored when they aren't", () => {
+  const onlySteps = { HeartRate: [], BloodPressure: [], SleepSession: [], Steps: ["com.google.android.apps.fitness"] };
+  const c = buildCheckup({ ...base, writers: onlySteps });
+  expect(byId(c).data).toMatchObject({ status: "ok", writers: ["com.google.android.apps.fitness"] });
+  const teen = buildCheckup({ ...base, vitalsAllowed: false, stepsAllowed: false, granted: new Set(["SleepSession", "ExerciseSession", "Weight"]), writers: onlySteps });
+  expect(byId(teen).data.status).toBe("todo");
+});

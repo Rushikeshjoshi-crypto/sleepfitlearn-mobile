@@ -9,8 +9,9 @@ import android.widget.TextView
 
 /**
  * The privacy rationale Health Connect shows from its own permissions screen:
- * which health data the app reads (sleep, exercise, weight, heart rate,
- * resting heart rate, blood pressure), why, where it goes, and how to stop.
+ * which health data the app reads (sleep, exercise, weight, steps as daily
+ * totals, heart rate, resting heart rate, blood pressure), why, where it
+ * goes, and how to stop.
  * Plain native views with the text from strings.xml (English, values-hi for
  * Hindi), so it works without signing in or starting React Native.
  */
