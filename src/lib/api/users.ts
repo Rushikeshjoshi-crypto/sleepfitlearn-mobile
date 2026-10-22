@@ -1,6 +1,7 @@
 import { apiGet, apiPost, apiPut, ApiError } from "./client";
 import { getIdTokenClaims } from "../aws/cognito";
 import { clearPendingBirthYear, readPendingBirthYear } from "../family/pending";
+import { lockedStepGoal } from "../settings/lockedStepGoal";
 
 export type UserProfile = {
   id: string;
@@ -126,5 +127,9 @@ export async function updateUserProfile(partial: Partial<EditableUserFields>): P
     country_code: current.country_code,
     ...partial,
   };
+  // When the server lists the goal as restricted (13–17, minor_data_enabled
+  // off) the GET shows it as null, so it's left out entirely — the server
+  // then keeps the stored goal (same as the web's updateUserProfile).
+  if (lockedStepGoal(current)) delete merged.daily_step_goal;
   return apiPut<UserProfile>("users", "", merged);
 }
