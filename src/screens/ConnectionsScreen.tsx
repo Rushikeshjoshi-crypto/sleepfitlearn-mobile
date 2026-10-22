@@ -20,6 +20,7 @@ import {
   readWeights,
   requestPermissions as requestHealthConnectPermissions,
 } from "../lib/native/healthConnect";
+import { checkStepsAllowed } from "../lib/steps/access";
 import { getSyncEnabled as getHealthConnectSyncEnabled, setSyncEnabled as setHealthConnectSyncEnabled } from "../lib/healthConnect/preference";
 import { syncHealthConnect } from "../lib/healthConnect/sync";
 import { VitalsSection } from "../components/vitals/VitalsSection";
@@ -139,7 +140,8 @@ export default function ConnectionsScreen() {
           text: t("Habits:continue"),
           onPress: async () => {
             setHcBusy(true);
-            const granted = await requestHealthConnectPermissions();
+            // Steps only when the account may use them (checked live, fails closed).
+            const granted = await requestHealthConnectPermissions(await checkStepsAllowed());
             setHcBusy(false);
             if (granted) {
               await finishConnecting();

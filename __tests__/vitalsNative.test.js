@@ -31,7 +31,7 @@ test("vitals ask for HeartRate, RestingHeartRate and BloodPressure only — no h
 
 test("the Sleep / Exercise / Weight / Steps request has no vitals in it, and doesn't count vitals as granted", async () => {
   hcLib.requestPermission.mockResolvedValue([read("HeartRate")]);
-  expect(await hc.requestPermissions()).toBe(false);
+  expect(await hc.requestPermissions(true)).toBe(false);
   const asked = hcLib.requestPermission.mock.calls[0][0].map((p) => p.recordType).sort();
   expect(asked).toEqual(["ExerciseSession", "SleepSession", "Steps", "Weight"]);
 });

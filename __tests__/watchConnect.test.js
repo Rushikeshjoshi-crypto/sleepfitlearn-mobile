@@ -38,7 +38,7 @@ test("adult: one request for all six types, both syncs on, both run", async () =
   hc.requestAllPermissions.mockResolvedValue(new Set(["SleepSession", "HeartRate", "BloodPressure"]));
   const out = await connectWatch();
   expect(hc.requestAllPermissions).toHaveBeenCalledTimes(1);
-  expect(hc.requestAllPermissions).toHaveBeenCalledWith(true);
+  expect(hc.requestAllPermissions).toHaveBeenCalledWith(true, true);
   expect(setSyncEnabled).toHaveBeenCalledWith(true);
   expect(setVitalsEnabled).toHaveBeenCalledWith("user-1", true);
   expect(syncHealthConnect).toHaveBeenCalled();
@@ -50,7 +50,7 @@ test("13–17 with the flag off: heart rate / BP never asked for or switched on"
   checkVitalsAccess.mockResolvedValue({ allowed: false, ageBand: "13_17" });
   hc.requestAllPermissions.mockResolvedValue(new Set(["SleepSession"]));
   await connectWatch();
-  expect(hc.requestAllPermissions).toHaveBeenCalledWith(false);
+  expect(hc.requestAllPermissions).toHaveBeenCalledWith(false, false);
   expect(setVitalsEnabled).not.toHaveBeenCalled();
   expect(syncVitals).not.toHaveBeenCalled();
   expect(setSyncEnabled).toHaveBeenCalledWith(true);

@@ -18,7 +18,7 @@ test("Habits: no Health Connect tab, no connection switches; a row opens Connect
 
 test("Connections screen has screen time, watch and Health Connect with their permission flows", () => {
   const src = read("src/screens/ConnectionsScreen.tsx");
-  for (const re of [/<WatchConnectCard/, /<VitalsSection/, /startTracking\(\)/, /openUsageAccessSettings\(\)/, /requestHealthConnectPermissions\(\)/, /requestIgnoreBatteryOptimizations\(\)/]) {
+  for (const re of [/<WatchConnectCard/, /<VitalsSection/, /startTracking\(\)/, /openUsageAccessSettings\(\)/, /requestHealthConnectPermissions\(await checkStepsAllowed\(\)\)/, /requestIgnoreBatteryOptimizations\(\)/]) {
     expect(src).toMatch(re);
   }
 });

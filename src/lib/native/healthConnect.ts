@@ -35,13 +35,16 @@ export type HealthConnectWeightSample = {
 const IS_SUPPORTED = Platform.OS === "android";
 
 // What the sync reads. Each one is optional: whichever the user grants is
-// synced, the rest skipped. Steps are read as daily totals (readDailySteps).
-const REQUIRED_PERMISSIONS = [
+// synced, the rest skipped. Steps are read as daily totals (readDailySteps)
+// and only asked for when the account may use them (lib/steps/access.ts —
+// same rule as heart rate / BP); Sleep / Exercise / Weight are unchanged.
+const BASE_PERMISSIONS = [
   { accessType: "read" as const, recordType: "SleepSession" as const },
   { accessType: "read" as const, recordType: "ExerciseSession" as const },
   { accessType: "read" as const, recordType: "Weight" as const },
-  { accessType: "read" as const, recordType: "Steps" as const },
 ];
+const STEPS_PERMISSION = { accessType: "read" as const, recordType: "Steps" as const };
+const REQUIRED_PERMISSIONS = [...BASE_PERMISSIONS, STEPS_PERMISSION];
 
 export type SyncedRecordType = (typeof REQUIRED_PERMISSIONS)[number]["recordType"];
 
@@ -94,11 +97,20 @@ export async function hasPermissions(): Promise<boolean> {
 }
 
 // Triggers the Health Connect system permission dialog listing Sleep,
-// Exercise, Weight and Steps — true if the user granted at least one of them.
-export async function requestPermissions(): Promise<boolean> {
+// Exercise, Weight (and Steps only when `includeSteps`) — true if the user
+// granted at least one of them.
+export async function requestPermissions(includeSteps: boolean): Promise<boolean> {
   if (!IS_SUPPORTED) return false;
   if (!(await ensureInitialized())) return false;
-  return grantedTypes(await requestPermission(REQUIRED_PERMISSIONS)).size > 0;
+  return grantedTypes(await requestPermission(includeSteps ? REQUIRED_PERMISSIONS : BASE_PERMISSIONS)).size > 0;
+}
+
+// Just Steps — the Home Steps card's "Allow step access". The caller checks
+// the account may use steps first. True when Steps was granted.
+export async function requestStepsPermission(): Promise<boolean> {
+  if (!IS_SUPPORTED) return false;
+  if (!(await ensureInitialized())) return false;
+  return grantedTypes(await requestPermission([STEPS_PERMISSION])).has("Steps");
 }
 
 export async function readSleepSessions(from: string, to: string): Promise<HealthConnectSleepSession[]> {
@@ -252,8 +264,8 @@ export function openHealthConnectSettings(): void {
 }
 
 // ── "Connect your watch" (lib/watch) ─────────────────────────────────────────
-// Every type in ONE permission request (heart rate / BP only when the account
-// may use them), instead of the two separate requests above.
+// Every type in ONE permission request (steps and heart rate / BP only when
+// the account may use them), instead of the separate requests above.
 const ALL_TYPES = [...REQUIRED_PERMISSIONS, ...VITALS_PERMISSIONS];
 
 function grantedOf(granted: { accessType: string; recordType: string }[]): Set<string> {
@@ -262,10 +274,10 @@ function grantedOf(granted: { accessType: string; recordType: string }[]): Set<s
   );
 }
 
-export async function requestAllPermissions(includeVitals: boolean): Promise<Set<string>> {
+export async function requestAllPermissions(includeVitals: boolean, includeSteps: boolean): Promise<Set<string>> {
   if (!IS_SUPPORTED) return new Set();
   if (!(await ensureInitialized())) return new Set();
-  const asked = includeVitals ? ALL_TYPES : REQUIRED_PERMISSIONS;
+  const asked = [...BASE_PERMISSIONS, ...(includeSteps ? [STEPS_PERMISSION] : []), ...(includeVitals ? VITALS_PERMISSIONS : [])];
   return grantedOf(await requestPermission(asked));
 }
 

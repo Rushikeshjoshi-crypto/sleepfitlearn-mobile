@@ -41,6 +41,11 @@ test("Steps is part of the permission set: everything but Steps granted → allo
   expect(byId(c).permission).toEqual({ id: "permission", status: "todo", action: "allow" });
 });
 
+test("steps not allowed (13–17 flag off): Steps isn't needed for the permission step", () => {
+  const c = buildCheckup({ ...base, vitalsAllowed: false, stepsAllowed: false, granted: new Set(["SleepSession", "ExerciseSession", "Weight"]) });
+  expect(byId(c).permission.status).toBe("ok");
+});
+
 test("no known watch app on the phone → info, not an error", () => {
   const c = buildCheckup({ ...base, installed: [], writers: { HeartRate: [], BloodPressure: [], SleepSession: [] } });
   expect(byId(c).watchApp).toEqual({ id: "watchApp", status: "todo", action: null, apps: [] });

@@ -7,15 +7,20 @@ import { watchAppSharesKnown } from "./knownApps";
 //   3. a watch app on the phone           → (info only)
 //   4. that app writes into Health Connect→ openWatchApp (turn its sharing on)
 // Heart rate / BP only count when the account may use them (vitalsAllowed:
-// lib/vitals/eligibility.ts); otherwise only sleep data is looked at.
+// lib/vitals/eligibility.ts); otherwise only sleep data is looked at. Steps
+// follow the same rule (stepsAllowed, lib/steps/access.ts).
 
-export const BASE_TYPES = ["SleepSession", "ExerciseSession", "Weight", "Steps"] as const;
+export const BASE_TYPES = ["SleepSession", "ExerciseSession", "Weight"] as const;
+export const STEPS_TYPES = ["Steps"] as const;
 export const VITAL_TYPES = ["HeartRate", "RestingHeartRate", "BloodPressure"] as const;
 
 export type CheckupInput = {
   hcAvailable: boolean;
   granted: Set<string>;
   vitalsAllowed: boolean;
+  // Whether Steps is asked for; the same rule as vitalsAllowed, so it
+  // defaults to it.
+  stepsAllowed?: boolean;
   // Known watch apps installed on the phone (lib/watch/knownApps.ts).
   installed: string[];
   // Apps that wrote each type into Health Connect in the last 30 days.
@@ -30,8 +35,8 @@ export type CheckupStep =
 
 export type Checkup = { ready: boolean; steps: CheckupStep[] };
 
-export function neededTypes(vitalsAllowed: boolean): string[] {
-  return [...BASE_TYPES, ...(vitalsAllowed ? VITAL_TYPES : [])];
+export function neededTypes(vitalsAllowed: boolean, stepsAllowed: boolean = vitalsAllowed): string[] {
+  return [...BASE_TYPES, ...(stepsAllowed ? STEPS_TYPES : []), ...(vitalsAllowed ? VITAL_TYPES : [])];
 }
 
 export function buildCheckup(input: CheckupInput): Checkup {
@@ -40,7 +45,7 @@ export function buildCheckup(input: CheckupInput): Checkup {
   }
   const steps: CheckupStep[] = [{ id: "healthConnect", status: "ok", action: null }];
 
-  const allGranted = neededTypes(input.vitalsAllowed).every((t) => input.granted.has(t));
+  const allGranted = neededTypes(input.vitalsAllowed, input.stepsAllowed ?? input.vitalsAllowed).every((t) => input.granted.has(t));
   steps.push({ id: "permission", status: allGranted ? "ok" : "todo", action: allGranted ? null : "allow" });
 
   const writers = [

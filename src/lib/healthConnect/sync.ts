@@ -9,6 +9,7 @@ import {
   type ActivityType,
 } from "../api/fitness";
 import { getGrantedRecordTypes, readExerciseSessions, readSleepSessions, readWeights } from "../native/healthConnect";
+import { checkStepsAllowed } from "../steps/access";
 import { syncSteps } from "../steps/sync";
 import { labelForExerciseType } from "./exerciseLabels";
 import { getSyncEnabled } from "./preference";
@@ -89,8 +90,11 @@ export function syncHealthConnect(): Promise<void> {
     if (granted.has("Weight")) jobs.push(["weight", () => syncWeight(from, to)]);
     if (granted.has("ExerciseSession")) jobs.push(["exercise", () => syncExercise(from, to)]);
     // Steps upsert their own window of daily totals (lib/steps/sync.ts) —
-    // unlike the rows above, a day's total changes, so it's re-sent.
-    if (granted.has("Steps")) jobs.push(["steps", () => syncSteps()]);
+    // unlike the rows above, a day's total changes, so it's re-sent. Only
+    // for accounts that may use steps (checked live, fails closed): a Steps
+    // grant left over from before (e.g. a 13–17 account while the flag is
+    // off) is never read.
+    if (granted.has("Steps") && (await checkStepsAllowed())) jobs.push(["steps", () => syncSteps()]);
     const results = await Promise.allSettled(jobs.map(([, run]) => run()));
     results.forEach((r, i) => {
       if (r.status === "rejected") console.warn(`Health Connect sync: ${jobs[i][0]} failed`, r.reason);

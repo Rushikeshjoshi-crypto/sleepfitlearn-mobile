@@ -22,11 +22,13 @@ jest.mock("../src/lib/api/fitness", () => ({
 jest.mock("../src/lib/healthConnect/preference", () => ({ getSyncEnabled: jest.fn(async () => true) }));
 jest.mock("../src/lib/syncGate", () => ({ isBackgroundSyncAllowed: () => true }));
 jest.mock("../src/lib/steps/sync", () => ({ syncSteps: jest.fn(async () => {}) }));
+jest.mock("../src/lib/steps/access", () => ({ checkStepsAllowed: jest.fn(async () => true) }));
 
 import * as native from "../src/lib/native/healthConnect";
 import * as sleepApi from "../src/lib/api/sleep";
 import * as fitnessApi from "../src/lib/api/fitness";
 import * as stepsSync from "../src/lib/steps/sync";
+import * as stepsAccess from "../src/lib/steps/access";
 import { syncHealthConnect, syncHealthConnectIfEnabled } from "../src/lib/healthConnect/sync";
 
 const mocked = (fn) => fn;
@@ -42,6 +44,16 @@ describe("steps job", () => {
     mocked(native.getGrantedRecordTypes).mockResolvedValueOnce(new Set(["Steps"]));
     await syncHealthConnect();
     expect(stepsSync.syncSteps).toHaveBeenCalledTimes(1);
+  });
+
+  test("steps not allowed for the account (13–17 flag off, under-13, status error): no steps sync even with Steps granted", async () => {
+    mocked(native.getGrantedRecordTypes).mockResolvedValueOnce(new Set(["Steps", "Weight"]));
+    mocked(native.readWeights).mockResolvedValueOnce([{ time: "2026-10-06T07:00:00", weightKg: 70 }]);
+    mocked(fitnessApi.createWeightEntry).mockResolvedValue({});
+    mocked(stepsAccess.checkStepsAllowed).mockResolvedValueOnce(false);
+    await syncHealthConnect();
+    expect(stepsSync.syncSteps).not.toHaveBeenCalled();
+    expect(fitnessApi.createWeightEntry).toHaveBeenCalledTimes(1);
   });
 
   test("a failing steps job doesn't stop sleep / exercise / weight", async () => {

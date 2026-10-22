@@ -12,7 +12,7 @@ const LOOKBACK_DAYS = 30;
 export async function loadCheckup(now: Date = new Date()): Promise<Checkup> {
   const [available, access] = await Promise.all([isAvailable().catch(() => false), checkVitalsAccess()]);
   if (!available) {
-    return buildCheckup({ hcAvailable: false, granted: new Set(), vitalsAllowed: access.allowed, installed: [], writers: { HeartRate: [], BloodPressure: [], SleepSession: [] } });
+    return buildCheckup({ hcAvailable: false, granted: new Set(), vitalsAllowed: access.allowed, stepsAllowed: access.allowed, installed: [], writers: { HeartRate: [], BloodPressure: [], SleepSession: [] } });
   }
   const [granted, installed] = await Promise.all([getGrantedAllTypes(), installedWatchApps(KNOWN_WATCH_PACKAGES)]);
   const from = new Date(now.getTime() - LOOKBACK_DAYS * 86_400_000).toISOString();
@@ -25,5 +25,5 @@ export async function loadCheckup(now: Date = new Date()): Promise<Checkup> {
     await writersOf("BloodPressure"),
     await writersOf("SleepSession"),
   ];
-  return buildCheckup({ hcAvailable: true, granted, vitalsAllowed: access.allowed, installed, writers: { HeartRate, BloodPressure, SleepSession } });
+  return buildCheckup({ hcAvailable: true, granted, vitalsAllowed: access.allowed, stepsAllowed: access.allowed, installed, writers: { HeartRate, BloodPressure, SleepSession } });
 }

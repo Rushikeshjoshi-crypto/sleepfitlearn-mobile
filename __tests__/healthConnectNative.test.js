@@ -1,5 +1,5 @@
-// Health Connect permissions: Sleep / Exercise / Weight / Steps are asked for
-// together, and having SOME of them granted is enough to sync those — one
+// Health Connect permissions: Sleep / Exercise / Weight (+ Steps when the
+// account may use steps) are asked for together, and having SOME of them granted is enough to sync those — one
 // denial no longer turns the whole sync off. Steps are read only as Health
 // Connect's own daily aggregate (never by summing raw records).
 jest.mock("react-native-health-connect", () => ({
@@ -23,20 +23,45 @@ beforeEach(() => jest.clearAllMocks());
 
 test("the permission request is Sleep, Exercise, Weight and Steps (read only)", async () => {
   hcLib.requestPermission.mockResolvedValue([read("SleepSession")]);
-  await hc.requestPermissions();
+  await hc.requestPermissions(true);
   const asked = hcLib.requestPermission.mock.calls[0][0];
   expect(asked.map((p) => p.recordType).sort()).toEqual(["ExerciseSession", "SleepSession", "Steps", "Weight"]);
   expect(asked.every((p) => p.accessType === "read")).toBe(true);
 });
 
+test("steps not allowed for the account: Steps is not asked for (Sleep / Exercise / Weight unchanged)", async () => {
+  hcLib.requestPermission.mockResolvedValue([read("SleepSession")]);
+  await hc.requestPermissions(false);
+  const asked = hcLib.requestPermission.mock.calls[0][0];
+  expect(asked.map((p) => p.recordType).sort()).toEqual(["ExerciseSession", "SleepSession", "Weight"]);
+});
+
 test("Steps alone granted is enough to sync", async () => {
   hcLib.requestPermission.mockResolvedValue([read("Steps")]);
-  expect(await hc.requestPermissions()).toBe(true);
+  expect(await hc.requestPermissions(true)).toBe(true);
+});
+
+test("requestStepsPermission asks for Steps only, true only when Steps was granted", async () => {
+  hcLib.requestPermission.mockResolvedValue([read("Steps")]);
+  expect(await hc.requestStepsPermission()).toBe(true);
+  expect(hcLib.requestPermission.mock.calls[0][0]).toEqual([read("Steps")]);
+  hcLib.requestPermission.mockResolvedValue([]);
+  expect(await hc.requestStepsPermission()).toBe(false);
+});
+
+test("watch one-tap request: Steps and HR/BP only when allowed", async () => {
+  hcLib.requestPermission.mockResolvedValue([]);
+  await hc.requestAllPermissions(false, false);
+  expect(hcLib.requestPermission.mock.calls[0][0].map((p) => p.recordType).sort()).toEqual(["ExerciseSession", "SleepSession", "Weight"]);
+  await hc.requestAllPermissions(true, true);
+  expect(hcLib.requestPermission.mock.calls[1][0].map((p) => p.recordType).sort()).toEqual(
+    ["BloodPressure", "ExerciseSession", "HeartRate", "RestingHeartRate", "SleepSession", "Steps", "Weight"],
+  );
 });
 
 test("partial grants count: requestPermissions / hasPermissions are true with any one granted", async () => {
   hcLib.requestPermission.mockResolvedValue([read("Weight")]);
-  expect(await hc.requestPermissions()).toBe(true);
+  expect(await hc.requestPermissions(true)).toBe(true);
   hcLib.getGrantedPermissions.mockResolvedValue([read("SleepSession")]);
   expect(await hc.hasPermissions()).toBe(true);
   hcLib.getGrantedPermissions.mockResolvedValue([]);
