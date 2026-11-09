@@ -1,28 +1,30 @@
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View, type GestureResponderEvent, type LayoutChangeEvent } from "react-native";
-import Svg, { Defs, G, Line, LinearGradient, Path, Rect, Stop, Text as SvgText } from "react-native-svg";
+import Svg, { G, Line, Path, Rect, Text as SvgText } from "react-native-svg";
 import { useTheme } from "../../theme/ThemeContext";
-import type { ColorPalette } from "../../theme/palettes";
+import { radius, type ColorPalette } from "../../theme/palettes";
 import { CHART_HEIGHT, PAD, formatTick, xLabelIndexes, yScale } from "./chartScale";
 
 // Mobile counterpart of the web app's src/components/trends/charts/TrendBarChart.tsx:
-// dashed grid, Y from 0, gradient bars with rounded tops (max 40px wide).
+// dashed grid, Y from 0, flat solid bars with small corners (max 40px wide), optional dashed reference line.
 // Tap a bar to read its value (web's hover tooltip).
 export function TrendBarChart({
   data,
   seriesLabel,
   color,
+  referenceLine,
 }: {
   data: { key: string; label: string; value: number }[];
   seriesLabel: string;
   color: string;
+  referenceLine?: { y: number; label: string };
 }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [width, setWidth] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
 
-  const { max, ticks } = yScale(Math.max(0, ...data.map((d) => d.value)));
+  const { max, ticks } = yScale(Math.max(0, referenceLine?.y ?? 0, ...data.map((d) => d.value)));
   const plotW = Math.max(0, width - PAD.left - PAD.right);
   const plotH = CHART_HEIGHT - PAD.top - PAD.bottom;
   const slot = data.length > 0 ? plotW / data.length : 0;
@@ -34,7 +36,7 @@ export function TrendBarChart({
     const left = PAD.left + i * slot + (slot - barW) / 2;
     const top = y(v);
     const bottom = PAD.top + plotH;
-    const r = Math.min(8, barW / 2, Math.max(0, bottom - top));
+    const r = Math.min(2, barW / 2, Math.max(0, bottom - top));
     return `M${left},${bottom} L${left},${top + r} Q${left},${top} ${left + r},${top} L${left + barW - r},${top} Q${left + barW},${top} ${left + barW},${top + r} L${left + barW},${bottom} Z`;
   }
 
@@ -52,12 +54,6 @@ export function TrendBarChart({
       <Pressable onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)} onPress={onPress}>
         {width > 0 && (
           <Svg width={width} height={CHART_HEIGHT}>
-            <Defs>
-              <LinearGradient id="trendBarFill" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0%" stopColor={color} stopOpacity={0.95} />
-                <Stop offset="100%" stopColor={color} stopOpacity={0.55} />
-              </LinearGradient>
-            </Defs>
             {ticks.map((tk) => (
               <G key={`t-${tk}`}>
                 <Line x1={PAD.left} x2={width - PAD.right} y1={y(tk)} y2={y(tk)} stroke={colors.border} strokeDasharray="3 3" strokeOpacity={0.5} />
@@ -67,9 +63,17 @@ export function TrendBarChart({
               </G>
             ))}
             {selected != null && sel && (
-              <Rect x={PAD.left + selected * slot} y={PAD.top} width={slot} height={plotH} rx={6} fill={colors.muted} opacity={0.4} />
+              <Rect x={PAD.left + selected * slot} y={PAD.top} width={slot} height={plotH} rx={2} fill={colors.soft} opacity={0.6} />
             )}
-            {data.map((d, i) => (d.value > 0 ? <Path key={d.key} d={barPath(i, d.value)} fill="url(#trendBarFill)" /> : null))}
+            {data.map((d, i) => (d.value > 0 ? <Path key={d.key} d={barPath(i, d.value)} fill={color} /> : null))}
+            {referenceLine && referenceLine.y <= max && (
+              <G>
+                <Line x1={PAD.left} x2={width - PAD.right} y1={y(referenceLine.y)} y2={y(referenceLine.y)} stroke={colors.mutedForeground} strokeDasharray="4 4" strokeOpacity={0.7} />
+                <SvgText x={width - PAD.right - 2} y={y(referenceLine.y) - 4} fontSize={10} fill={colors.mutedForeground} textAnchor="end">
+                  {referenceLine.label}
+                </SvgText>
+              </G>
+            )}
             {labelIdx.map((i) => (
               <SvgText
                 key={`x-${i}`}
@@ -103,7 +107,7 @@ function makeStyles(colors: ColorPalette) {
     tooltip: {
       marginTop: 6,
       alignSelf: "flex-start",
-      borderRadius: 12,
+      borderRadius: radius.md,
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.card,
@@ -111,7 +115,7 @@ function makeStyles(colors: ColorPalette) {
       paddingVertical: 6,
       gap: 2,
     },
-    tooltipTitle: { fontSize: 12, fontWeight: "600", color: colors.foreground },
+    tooltipTitle: { fontSize: 12, fontWeight: "800", color: colors.foreground },
     tooltipRow: { fontSize: 12, color: colors.mutedForeground },
   });
 }

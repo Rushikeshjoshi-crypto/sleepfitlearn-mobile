@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, Modal, StyleSheet, Text, TextInput, View } fr
 import { useTranslation } from "react-i18next";
 import { deleteContextEvent, updateContextEvent, type ContextEvent } from "../../lib/api/context";
 import { useTheme } from "../../theme/ThemeContext";
-import { typography, type ColorPalette } from "../../theme/palettes";
+import { radius, typography, type ColorPalette } from "../../theme/palettes";
 import { AnimatedPressable } from "../AnimatedPressable";
 import { showSaveError } from "../../lib/ui/apiErrors";
 
@@ -123,12 +123,12 @@ export function HabitEventEditModal({
 function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
     backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", padding: 24 },
-    card: { backgroundColor: colors.card, borderRadius: 24, padding: 20, gap: 12 },
+    card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 20, gap: 12 },
     title: { fontSize: typography.sectionTitle.fontSize, fontWeight: "600", color: colors.foreground },
     input: {
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 14,
+      borderRadius: radius.md,
       paddingHorizontal: 14,
       paddingVertical: 12,
       fontSize: 16,

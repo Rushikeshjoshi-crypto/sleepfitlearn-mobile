@@ -3,7 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme/ThemeContext";
-import { typography, type ColorPalette } from "../theme/palettes";
+import { radius, typography, type ColorPalette } from "../theme/palettes";
 import { AnimatedPressable } from "./AnimatedPressable";
 import { getDateFnsLocale } from "../lib/i18n/dateFnsLocale";
 
@@ -155,9 +155,9 @@ export default function CalendarModal({
 function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
     backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", padding: 24 },
-    card: { backgroundColor: colors.card, borderRadius: 20, padding: 16, gap: 12 },
+    card: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16, gap: 12 },
     header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-    monthLabel: { fontSize: typography.body.fontSize, fontWeight: "600", color: colors.foreground },
+    monthLabel: { fontSize: typography.body.fontSize, fontWeight: "800", color: colors.foreground },
     navArrow: { fontSize: 22, color: colors.mutedForeground, paddingHorizontal: 8 },
     weekdayRow: { flexDirection: "row" },
     weekdayLabel: {
@@ -173,15 +173,15 @@ function makeStyles(colors: ColorPalette) {
       aspectRatio: 1,
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: 999,
+      borderRadius: radius.md,
     },
     cellSelected: { backgroundColor: colors.primary },
-    cellToday: { borderWidth: 1, borderColor: colors.navTint },
+    cellToday: { borderWidth: 1, borderColor: colors.orange },
     cellText: { fontSize: 14, color: colors.foreground },
     cellTextOutside: { color: colors.mutedForeground, opacity: 0.5 },
     cellTextDisabled: { color: colors.mutedForeground, opacity: 0.3 },
     cellTextSelected: { color: colors.primaryForeground, fontWeight: "700" },
     footer: { flexDirection: "row", justifyContent: "space-between", paddingTop: 4 },
-    footerLink: { color: colors.navTint, fontWeight: "600", fontSize: 14 },
+    footerLink: { color: colors.primary, fontWeight: "700", fontSize: 14 },
   });
 }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "../theme/ThemeContext";
-import type { ColorPalette } from "../theme/palettes";
+import { radius, type ColorPalette } from "../theme/palettes";
 
 // Handcrafted proportional-height bars — same technique the website uses for
 // its Weekly Snapshot bars (no charting library dependency).
@@ -20,7 +20,7 @@ export default function BarChart({
 }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const resolvedColor = color ?? colors.navTint;
+  const resolvedColor = color ?? colors.orange;
   const max = Math.max(1, ...data.map((d) => d.value));
 
   // One Animated.Value per bar, grown from 0 to its target height whenever
@@ -44,7 +44,7 @@ export default function BarChart({
     <View style={styles.row}>
       {data.map((d, i) => {
         const barColor =
-          highlightIndex === undefined ? resolvedColor : i === highlightIndex ? resolvedColor : `${resolvedColor}66`;
+          highlightIndex === undefined ? resolvedColor : i === highlightIndex ? resolvedColor : colors.bar;
         return (
           <View key={i} style={styles.column}>
             <Animated.View style={[styles.bar, { height: animations[i] ?? 4, backgroundColor: barColor }]} />
@@ -66,8 +66,8 @@ function makeStyles(colors: ColorPalette) {
       marginTop: 8,
     },
     column: { alignItems: "center", flex: 1, gap: 4 },
-    bar: { width: 14, borderRadius: 4 },
+    bar: { width: 14, borderTopLeftRadius: radius.sm, borderTopRightRadius: radius.sm },
     label: { fontSize: 10, color: colors.mutedForeground },
-    labelActive: { color: colors.foreground, fontWeight: "600" },
+    labelActive: { color: colors.foreground, fontWeight: "800" },
   });
 }

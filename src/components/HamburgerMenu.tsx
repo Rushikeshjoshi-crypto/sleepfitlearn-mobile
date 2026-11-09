@@ -6,7 +6,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import type { AppStackParamList } from "../navigation/AppNavigator";
 import { useTheme } from "../theme/ThemeContext";
-import type { ColorPalette } from "../theme/palettes";
+import { radius, type ColorPalette } from "../theme/palettes";
 import { AnimatedPressable } from "./AnimatedPressable";
 import { getUserProfile } from "../lib/api/users";
 import { getFamilyStatus } from "../lib/api/family";
@@ -167,10 +167,12 @@ function makeStyles(colors: ColorPalette) {
     button: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: colors.muted,
+      backgroundColor: colors.card,
     },
     friesIcon: { width: 18, height: 14, justifyContent: "space-between" },
     friesBar: { height: 2.5, borderRadius: 2, backgroundColor: colors.foreground },
@@ -183,7 +185,7 @@ function makeStyles(colors: ColorPalette) {
     // backdrop-blur even though RN has no real blur without a native
     // package (see panel's translucent background below for the same
     // reasoning).
-    backdrop: { flex: 1, backgroundColor: "rgba(5,11,42,0.45)" },
+    backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)" },
     panel: {
       position: "absolute",
       right: 0,
@@ -194,17 +196,10 @@ function makeStyles(colors: ColorPalette) {
       // already composites over the live screen, so a translucent color
       // here genuinely shows a dimmed version of whatever's behind it,
       // unlike a blur it won't soften that content, just tint through it).
-      backgroundColor: `${colors.card}E0`,
-      borderTopLeftRadius: 24,
-      borderBottomLeftRadius: 24,
+      backgroundColor: colors.card,
       borderLeftWidth: 1,
-      borderColor: "rgba(255,255,255,0.14)",
+      borderColor: colors.border,
       overflow: "hidden",
-      shadowColor: "#000",
-      shadowOpacity: 0.2,
-      shadowRadius: 16,
-      shadowOffset: { width: -4, height: 0 },
-      elevation: 12,
     },
     panelInner: { flex: 1 },
     panelHeader: {
@@ -216,8 +211,8 @@ function makeStyles(colors: ColorPalette) {
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
     },
-    panelTitle: { fontSize: 16, fontWeight: "600", color: colors.foreground },
-    closeText: { fontSize: 14, color: colors.navTint, fontWeight: "500" },
+    panelTitle: { fontSize: 16, fontWeight: "800", color: colors.foreground },
+    closeText: { fontSize: 14, color: colors.primary, fontWeight: "700" },
     profileCard: {
       flexDirection: "row",
       alignItems: "center",
@@ -225,8 +220,10 @@ function makeStyles(colors: ColorPalette) {
       marginHorizontal: 20,
       marginTop: 16,
       padding: 14,
-      borderRadius: 20,
-      backgroundColor: colors.muted,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.soft,
     },
     avatar: {
       width: 44,
@@ -234,9 +231,9 @@ function makeStyles(colors: ColorPalette) {
       borderRadius: 22,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: colors.navTint,
+      backgroundColor: colors.orange,
     },
-    avatarText: { color: colors.primaryForeground, fontSize: 18, fontWeight: "700" },
+    avatarText: { color: colors.orangeForeground, fontSize: 18, fontWeight: "800" },
     profileName: { flex: 1, fontSize: 15, fontWeight: "600", color: colors.foreground },
     list: { marginTop: 12, paddingHorizontal: 20 },
     row: {
@@ -252,10 +249,10 @@ function makeStyles(colors: ColorPalette) {
     rowIconWrap: {
       width: 32,
       height: 32,
-      borderRadius: 12,
+      borderRadius: radius.md,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: colors.muted,
+      backgroundColor: colors.soft,
     },
     rowIcon: { fontSize: 15 },
     rowLabel: { flex: 1, fontSize: 16, fontWeight: "500", color: colors.foreground },

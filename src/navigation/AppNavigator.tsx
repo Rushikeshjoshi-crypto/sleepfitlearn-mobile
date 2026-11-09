@@ -78,24 +78,22 @@ function AppTabs() {
         tabBarActiveTintColor: colors.navTint,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarShowLabel: true,
+        // Solid flat bar with a 1px top border (no shadow, no rounded top).
         tabBarStyle: {
           backgroundColor: colors.card,
-          borderTopWidth: 0,
-          borderTopLeftRadius: 28,
-          borderTopRightRadius: 28,
-          height: 68,
-          paddingTop: 10,
-          paddingBottom: 12,
-          shadowColor: "#000",
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: -2 },
-          elevation: 12,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          height: 64,
+          paddingTop: 6,
+          paddingBottom: 8,
+          elevation: 0,
+          shadowOpacity: 0,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600", marginTop: 2 },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "700", marginTop: 2 },
         tabBarLabel: TAB_LABELS[route.name as keyof AppTabParamList],
         tabBarIcon: ({ focused }) => (
-          <View style={[tabIconStyles.iconWrap, focused && { backgroundColor: `${colors.navTint}1A` }]}>
+          <View style={tabIconStyles.iconWrap}>
+            <View style={[tabIconStyles.indicator, focused && { backgroundColor: colors.orange }]} />
             <Text style={[tabIconStyles.glyph, focused ? tabIconStyles.glyphActive : tabIconStyles.glyphInactive]}>
               {TAB_ICONS[route.name as keyof AppTabParamList]}
             </Text>
@@ -115,10 +113,11 @@ const tabIconStyles = StyleSheet.create({
   iconWrap: {
     width: 40,
     height: 28,
-    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
+  // Orange bar above the active tab's icon.
+  indicator: { position: "absolute", top: -6, width: 28, height: 3, borderRadius: 2, backgroundColor: "transparent" },
   glyph: { fontSize: 18 },
   glyphActive: { opacity: 1 },
   glyphInactive: { opacity: 0.6 },
@@ -136,7 +135,7 @@ export default function AppNavigator() {
     headerShadowVisible: false,
     headerStyle: { backgroundColor: colors.background },
     headerTintColor: colors.navTint,
-    headerTitleStyle: { color: colors.foreground },
+    headerTitleStyle: { color: colors.foreground, fontWeight: "800" as const },
     // No matching web key — browser back navigation has no equivalent label.
     headerBackTitle: "Back",
     headerLeft: () => <BackButton />,

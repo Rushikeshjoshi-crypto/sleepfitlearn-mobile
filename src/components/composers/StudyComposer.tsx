@@ -10,7 +10,7 @@ import {
 } from "../../lib/api/study";
 import SelectModal, { type SelectSection } from "../SelectModal";
 import { useTheme } from "../../theme/ThemeContext";
-import { typography, type ColorPalette } from "../../theme/palettes";
+import { radius, typography, type ColorPalette } from "../../theme/palettes";
 import { AnimatedPressable } from "../AnimatedPressable";
 import { CUSTOM_SUBJECT_VALUE, resolveSubjectId } from "../../lib/study/subjects";
 import { toTotalMinutes, minutesToHoursAndMinutes } from "../../lib/study/formatMinutes";
@@ -258,17 +258,17 @@ function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: 24,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 20,
+    padding: 16,
     gap: 10,
   },
-  sectionTitle: { fontSize: typography.sectionTitle.fontSize, fontWeight: "600", color: colors.foreground },
+  sectionTitle: { fontSize: 20, fontWeight: "800", letterSpacing: -0.3, color: colors.foreground },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 14,
+    borderRadius: radius.md,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: typography.body.fontSize,
@@ -285,20 +285,20 @@ function makeStyles(colors: ColorPalette) {
   chip: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 999,
+    borderRadius: radius.md,
     paddingVertical: 6,
     paddingHorizontal: 12,
   },
-  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipActive: { backgroundColor: colors.orange, borderColor: colors.orange },
   chipText: { fontSize: typography.bodySmall.fontSize, color: colors.mutedForeground, fontWeight: "500" },
   // Session type values are stored/translated lowercase ("reading",
   // "exam prep") — same as web's `capitalize` CSS class on the equivalent chips.
   chipTextCapitalize: { textTransform: "capitalize" },
-  chipTextActive: { color: colors.primaryForeground },
+  chipTextActive: { color: colors.orangeForeground, fontWeight: "700" },
   formActions: { flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 },
-  button: { backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 20 },
+  button: { backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 12, paddingHorizontal: 20 },
   buttonText: { color: colors.primaryForeground, fontSize: typography.button.fontSize, fontWeight: "600" },
-  secondaryButton: { borderRadius: 999, paddingVertical: 12, paddingHorizontal: 20 },
+  secondaryButton: { borderRadius: radius.md, paddingVertical: 12, paddingHorizontal: 20 },
   secondaryButtonText: { color: colors.mutedForeground, fontSize: typography.button.fontSize, fontWeight: "500" },
   });
 }

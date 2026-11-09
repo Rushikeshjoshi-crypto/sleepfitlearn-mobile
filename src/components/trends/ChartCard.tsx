@@ -2,13 +2,15 @@ import { useMemo, type ReactNode } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
-import { typography, type ColorPalette } from "../../theme/palettes";
+import { radius, typography, type ColorPalette } from "../../theme/palettes";
 import { CHART_HEIGHT } from "./chartScale";
 
 // Mobile counterpart of the web app's src/components/trends/charts/ChartCard.tsx.
+// headerRight is the small "latest value / change" block of the Vitals cards.
 export function ChartCard({
   title,
   unit,
+  headerRight,
   isLoading,
   isEmpty,
   emptyMessage,
@@ -16,6 +18,7 @@ export function ChartCard({
 }: {
   title: string;
   unit?: string;
+  headerRight?: ReactNode;
   isLoading?: boolean;
   isEmpty?: boolean;
   emptyMessage?: string;
@@ -27,13 +30,16 @@ export function ChartCard({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>
-        {title}
-        {unit ? <Text style={styles.unit}> ({unit})</Text> : null}
-      </Text>
+      <View style={styles.header}>
+        <Text style={styles.title} numberOfLines={2}>
+          {title}
+          {unit ? <Text style={styles.unit}> ({unit})</Text> : null}
+        </Text>
+        {headerRight}
+      </View>
       {isLoading ? (
         <View style={styles.placeholder}>
-          <ActivityIndicator color={colors.navTint} />
+          <ActivityIndicator color={colors.orange} />
         </View>
       ) : isEmpty ? (
         <View style={[styles.placeholder, styles.empty]}>
@@ -50,16 +56,17 @@ function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
     card: {
       backgroundColor: colors.card,
-      borderRadius: 24,
+      borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: colors.border,
       padding: 16,
-      gap: 10,
+      gap: 12,
     },
-    title: { fontSize: typography.sectionTitle.fontSize, fontWeight: "600", color: colors.foreground },
+    header: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
+    title: { flex: 1, fontSize: typography.sectionTitle.fontSize + 2, fontWeight: "800", color: colors.foreground },
     unit: { fontSize: 12, fontWeight: "400", color: colors.mutedForeground },
     placeholder: { height: CHART_HEIGHT, alignItems: "center", justifyContent: "center" },
-    empty: { borderRadius: 14, borderWidth: 1, borderStyle: "dashed", borderColor: colors.border, padding: 12 },
+    empty: { borderRadius: radius.md, borderWidth: 1, borderStyle: "dashed", borderColor: colors.border, padding: 12 },
     emptyText: { fontSize: 13, color: colors.mutedForeground, textAlign: "center" },
   });
 }

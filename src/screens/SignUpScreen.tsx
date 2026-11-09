@@ -25,8 +25,9 @@ import { getCognitoErrorMessage } from "../lib/aws/cognito-errors";
 import { preSignUpRefusalKey } from "../lib/auth/preSignUp";
 import { getConfirmationStatus } from "../lib/api/authStatus";
 import type { AuthStackParamList } from "../navigation/AuthNavigator";
-import { useTheme } from "../theme/ThemeContext";
-import { typography, type ColorPalette } from "../theme/palettes";
+import { darkColors, type ColorPalette } from "../theme/palettes";
+import { AuthBackground } from "../components/auth/AuthBackground";
+import { makeAuthStyles } from "../components/auth/authStyles";
 import { AnimatedPressable } from "../components/AnimatedPressable";
 import { PasswordField } from "../components/PasswordField";
 import { CountryCodeField } from "../components/CountryCodeField";
@@ -47,7 +48,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const POLL_INTERVAL_MS = 5000;
 
 export default function SignUpScreen({ navigation }: Props) {
-  const { colors } = useTheme();
+  // Auth pages are always dark: the card sits on a photo (web AuthLayout).
+  const colors = darkColors;
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation("Auth");
   const { t: tFamily } = useTranslation("Family");
@@ -168,6 +170,7 @@ export default function SignUpScreen({ navigation }: Props) {
 
   if (done) {
     return (
+      <AuthBackground variant="signup">
       <View style={[styles.screen, styles.scrollContent]}>
         <View style={styles.card}>
           <View style={styles.cardHeader}>
@@ -187,10 +190,12 @@ export default function SignUpScreen({ navigation }: Props) {
           </AnimatedPressable>
         </View>
       </View>
+      </AuthBackground>
     );
   }
 
   return (
+    <AuthBackground variant="signup">
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -233,7 +238,7 @@ export default function SignUpScreen({ navigation }: Props) {
           onChangeText={setEmail}
         />
         <View style={styles.phoneRow}>
-          <CountryCodeField value={countryCode} onChange={setCountryCode} />
+          <CountryCodeField colors={colors} value={countryCode} onChange={setCountryCode} />
           <TextInput
             style={[styles.input, styles.phoneInput]}
             placeholder={t("SignUp.phonePlaceholder")}
@@ -258,12 +263,14 @@ export default function SignUpScreen({ navigation }: Props) {
         />
         <Text style={styles.birthYearHint}>{tFamily("Age.birthYearHelper")}</Text>
         <PasswordField
+          colors={colors}
           placeholder={t("SignUp.passwordLabel")}
           autoComplete="new-password"
           value={password}
           onChangeText={setPassword}
         />
         <PasswordField
+          colors={colors}
           placeholder={t("SignUp.confirmPasswordLabel")}
           autoComplete="new-password"
           value={confirmPassword}
@@ -292,72 +299,15 @@ export default function SignUpScreen({ navigation }: Props) {
       </AnimatedPressable>
       </ScrollView>
     </KeyboardAvoidingView>
+    </AuthBackground>
   );
 }
 
 function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    padding: 24,
-    gap: 20,
-  },
-  brandRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
-  brandIcon: { width: 28, height: 28, borderRadius: 8 },
-  brandText: { fontSize: 20, fontWeight: "600", letterSpacing: -0.3, color: colors.foreground },
-  brandTextAccent: { fontStyle: "italic", color: colors.navTint },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 28,
-    gap: 12,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 4,
-  },
-  cardHeader: { alignItems: "center", gap: 4, marginBottom: 8 },
-  title: { fontSize: typography.title.fontSize, fontWeight: "600", letterSpacing: -0.3, color: colors.foreground, textAlign: "center" },
-  subtitle: { fontSize: 14, color: colors.mutedForeground, textAlign: "center" },
-  birthYearHint: { fontSize: 12, color: colors.mutedForeground, marginTop: -4 },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: colors.foreground,
-    backgroundColor: colors.background,
-  },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: 999,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonText: { color: colors.primaryForeground, fontSize: 16, fontWeight: "600" },
-  phoneRow: { flexDirection: "row", gap: 8 },
-  phoneInput: { flex: 1 },
-  footerLink: { color: colors.foreground, textAlign: "center" },
-  // Fixed brand gold, not colors.navTint — see LoginScreen's same style for why.
-  footerLinkAccent: { color: "#DAA520", fontWeight: "600" },
-  errorBox: {
-    borderWidth: 1,
-    borderColor: colors.destructiveBorder,
-    backgroundColor: colors.destructiveBg,
-    borderRadius: 20,
-    padding: 12,
-  },
-  errorText: { color: colors.destructive },
+    ...makeAuthStyles(colors),
+    birthYearHint: { fontSize: 12, color: colors.mutedForeground, marginTop: -4 },
+    phoneRow: { flexDirection: "row", gap: 8 },
+    phoneInput: { flex: 1 },
   });
 }

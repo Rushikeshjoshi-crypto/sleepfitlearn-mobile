@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, StyleSheet, Text, View, type LayoutChangeEvent } from "react-native";
 import { useTheme } from "../theme/ThemeContext";
-import type { ColorPalette } from "../theme/palettes";
+import { radius, type ColorPalette } from "../theme/palettes";
 import { AnimatedPressable } from "./AnimatedPressable";
 
 export type SegmentedControlOption<T extends string> = { value: T; label: string };
@@ -65,8 +65,8 @@ function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
     container: {
       flexDirection: "row",
-      backgroundColor: colors.muted,
-      borderRadius: 999,
+      backgroundColor: colors.soft,
+      borderRadius: radius.md,
       padding: PADDING,
       minHeight: 44,
     },
@@ -75,16 +75,11 @@ function makeStyles(colors: ColorPalette) {
       top: PADDING,
       bottom: PADDING,
       left: PADDING,
-      borderRadius: 999,
+      borderRadius: radius.sm,
       backgroundColor: colors.primary,
-      shadowColor: colors.foreground,
-      shadowOpacity: 0.12,
-      shadowRadius: 4,
-      shadowOffset: { width: 0, height: 1 },
-      elevation: 2,
     },
     segment: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 10 },
-    label: { fontSize: 14, fontWeight: "600", color: colors.mutedForeground },
+    label: { fontSize: 14, fontWeight: "700", color: colors.mutedForeground },
     labelActive: { color: colors.primaryForeground },
   });
 }

@@ -35,9 +35,11 @@ import { HistoryCard } from "../components/history/HistoryCard";
 import { HistoryDateGroup } from "../components/history/HistoryDateGroup";
 import { HistoryEntryRow } from "../components/history/HistoryEntryRow";
 import StudyComposer from "../components/composers/StudyComposer";
+import { StudyWeekCard } from "../components/study/StudyWeekCard";
+import { StudySubjectGrid } from "../components/study/StudySubjectGrid";
 import SelectModal, { type SelectSection } from "../components/SelectModal";
 import { useTheme } from "../theme/ThemeContext";
-import { typography, type ColorPalette } from "../theme/palettes";
+import { radius, typography, type ColorPalette } from "../theme/palettes";
 import { AnimatedPressable } from "../components/AnimatedPressable";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { CUSTOM_SUBJECT_VALUE, resolveSubjectId } from "../lib/study/subjects";
@@ -112,7 +114,6 @@ export default function StudyScreen() {
   // group" role Habits' own "All habits" dropdown plays over its two boxes.
   const [subjectFilter, setSubjectFilter] = useState("all");
   const [subjectFilterPickerOpen, setSubjectFilterPickerOpen] = useState(false);
-  const [expandedSessionSubjects, setExpandedSessionSubjects] = useState<Set<string>>(new Set());
   const [expandedExamSubjects, setExpandedExamSubjects] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -310,26 +311,11 @@ export default function StudyScreen() {
   let filteredExams = subjectFilter === "all" ? exams : exams.filter((e) => e.subject_id === subjectFilter);
   if (dateFilter) filteredExams = filteredExams.filter((e) => isWithinDateRange(e.exam_date, dateFilter));
 
-  const sessionSubjectGroups = groupByKey(
-    filteredSessions,
-    (s) => s.subject_id ?? "__unspecified__",
-    (key) => subjectName(key === "__unspecified__" ? null : key),
-  );
   const examSubjectGroups = groupByKey(
     filteredExams,
     (e) => e.subject_id ?? "__unspecified__",
     (key) => subjectName(key === "__unspecified__" ? null : key),
   );
-
-  function toggleSessionSubject(key: string) {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedSessionSubjects((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }
 
   function toggleExamSubject(key: string) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -339,10 +325,6 @@ export default function StudyScreen() {
       else next.add(key);
       return next;
     });
-  }
-
-  function sessionValueLabel(session: StudySession): string {
-    return t("Study:minutesShort", { count: session.duration_minutes ?? 0 });
   }
 
   function examValueLabel(exam: ExamLog): string {
@@ -387,6 +369,12 @@ export default function StudyScreen() {
 
       {tab === "sessions" ? (
         <>
+          <StudyWeekCard
+            sessions={filteredSessions}
+            nameFor={subjectName}
+            categoryFor={(id) => subjects.find((s) => s.id === id)?.module_area ?? "other"}
+          />
+
           <StudyComposer
             editingSession={editingSession}
             onSaved={() => {
@@ -398,7 +386,7 @@ export default function StudyScreen() {
           />
 
           <View style={styles.filterRow}>
-            <Text style={styles.sectionTitle}>{t("Study:historyTitle")}</Text>
+            <Text style={styles.heading}>{t("Study:historyTitle")}</Text>
             <AnimatedPressable style={styles.filterTrigger} onPress={() => setSubjectFilterPickerOpen(true)}>
               <Text style={styles.filterTriggerText} numberOfLines={1}>
                 {subjectFilterLabel}
@@ -409,47 +397,19 @@ export default function StudyScreen() {
 
           {loading ? (
             <ActivityIndicator color={colors.navTint} />
-          ) : sessionSubjectGroups.length === 0 ? (
+          ) : filteredSessions.length === 0 ? (
             <View style={styles.card}>
               <Text style={styles.body}>
                 {error ?? (dateFilter ? t("Common:dateFilter.noResultsForRange") : t("Study:noSessionsLoggedYet"))}
               </Text>
             </View>
           ) : (
-            sessionSubjectGroups.map((group) => {
-              const dateGroups = groupByDate(group.items, (s) => s.session_date);
-              const expanded = expandedSessionSubjects.has(group.key);
-              return (
-                <HistoryCard
-                  key={group.key}
-                  title={group.name}
-                  summaryText={groupSummary(group.items, sessionValueLabel, (s) => s.session_date)}
-                  expanded={expanded}
-                  onToggle={() => toggleSessionSubject(group.key)}
-                  expandLabel={t("Common:expandHistory", { title: group.name })}
-                  collapseLabel={t("Common:collapseHistory", { title: group.name })}
-                >
-                  {dateGroups.map((dateGroup) => (
-                    <HistoryDateGroup key={dateGroup.label} label={dateGroup.label}>
-                      {dateGroup.items.map((session) => (
-                        <HistoryEntryRow
-                          key={session.sk}
-                          title={subjectName(session.subject_id)}
-                          subtitle={
-                            session.session_type
-                              ? capitalize(t(`Study:sessionTypes.${session.session_type}`, { defaultValue: session.session_type }))
-                              : undefined
-                          }
-                          value={sessionValueLabel(session)}
-                          onPress={() => setEditingSession(session)}
-                          onLongPress={() => onDeleteSession(session.sk)}
-                        />
-                      ))}
-                    </HistoryDateGroup>
-                  ))}
-                </HistoryCard>
-              );
-            })
+            <StudySubjectGrid
+              sessions={filteredSessions}
+              nameFor={subjectName}
+              onEdit={setEditingSession}
+              onDelete={onDeleteSession}
+            />
           )}
         </>
       ) : (
@@ -635,31 +595,32 @@ export default function StudyScreen() {
 function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  container: { padding: 24, gap: 16, paddingBottom: 40 },
-  title: { fontSize: typography.title.fontSize, fontWeight: "600", letterSpacing: -0.3, color: colors.foreground },
+  container: { padding: 16, gap: 12, paddingBottom: 40 },
+  title: { fontSize: typography.title.fontSize, fontWeight: "800", letterSpacing: -0.3, color: colors.foreground },
   card: {
     backgroundColor: colors.card,
-    borderRadius: 24,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 20,
+    padding: 16,
     gap: 10,
   },
+  heading: { fontSize: 20, fontWeight: "800", letterSpacing: -0.3, color: colors.foreground },
   sectionTitle: { fontSize: typography.sectionTitle.fontSize, fontWeight: "600", color: colors.foreground },
   filterRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   filterTrigger: {
     maxWidth: 160,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 999,
+    borderRadius: radius.md,
     paddingVertical: 6,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
   },
   filterTriggerText: { fontSize: typography.bodySmall.fontSize, color: colors.foreground, fontWeight: "500" },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 14,
+    borderRadius: radius.md,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: typography.body.fontSize,
@@ -669,9 +630,9 @@ function makeStyles(colors: ColorPalette) {
   notesInput: { minHeight: 60, textAlignVertical: "top" },
   marksRow: { flexDirection: "row", gap: 10 },
   formActions: { flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 },
-  button: { backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 20 },
+  button: { backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 12, paddingHorizontal: 20 },
   buttonText: { color: colors.primaryForeground, fontSize: typography.button.fontSize, fontWeight: "600" },
-  secondaryButton: { borderRadius: 999, paddingVertical: 12, paddingHorizontal: 20 },
+  secondaryButton: { borderRadius: radius.md, paddingVertical: 12, paddingHorizontal: 20 },
   secondaryButtonText: { color: colors.mutedForeground, fontSize: typography.button.fontSize, fontWeight: "500" },
   body: { fontSize: 14, color: colors.mutedForeground },
   loadErrorText: { fontSize: 14, color: colors.destructive },
@@ -679,12 +640,12 @@ function makeStyles(colors: ColorPalette) {
     borderWidth: 1,
     borderStyle: "dashed",
     borderColor: colors.border,
-    borderRadius: 16,
+    borderRadius: radius.md,
     paddingVertical: 14,
     alignItems: "center",
   },
   addExamText: { color: colors.navTint, fontWeight: "600", fontSize: typography.body.fontSize },
-  scoreBadge: { borderRadius: 999, paddingVertical: 4, paddingHorizontal: 10 },
+  scoreBadge: { borderRadius: radius.sm, paddingVertical: 4, paddingHorizontal: 10 },
   scoreBadgeText: { color: "#fff", fontSize: typography.bodySmall.fontSize, fontWeight: "700" },
   examEntryWrap: {
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -695,7 +656,7 @@ function makeStyles(colors: ColorPalette) {
   },
   guidancePanel: {
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: radius.md,
     padding: 12,
     gap: 4,
   },

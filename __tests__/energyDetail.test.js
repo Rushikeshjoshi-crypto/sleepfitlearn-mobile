@@ -46,6 +46,6 @@ test("energy popup strings exist in all 7 languages", () => {
 
 test("tapping the Energy tile opens the energy popup", () => {
   const src = fs.readFileSync(path.join(__dirname, "../src/screens/PersonalScreen.tsx"), "utf8");
-  expect(src).toMatch(/kind === "energy_level" \? \(\) => setEnergyDetailOpen\(true\)/);
+  expect(src).toMatch(/kind === "energy_level"\s*\?\s*\(\) => setEnergyDetailOpen\(true\)/);
   expect(src).toMatch(/<EnergyDetailSection/);
 });

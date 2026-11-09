@@ -25,23 +25,16 @@ import {
   type ExerciseEntry,
 } from "../lib/api/fitness";
 import ExerciseComposer from "../components/composers/ExerciseComposer";
-import BarChart from "../components/BarChart";
+import ExerciseWeekCard from "../components/exercise/ExerciseWeekCard";
+import ExerciseTimeline from "../components/exercise/ExerciseTimeline";
 import TextPromptModal from "../components/TextPromptModal";
 import { useTheme } from "../theme/ThemeContext";
-import { typography, type ColorPalette } from "../theme/palettes";
+import { radius, type ColorPalette } from "../theme/palettes";
 import { AnimatedPressable } from "../components/AnimatedPressable";
 import { localizedName } from "../lib/i18n/localizedName";
-import { formatIcuPlural } from "../lib/i18n/icuPlural";
-import { isoDaysAgo, todayISO } from "../lib/dateRange";
-import { groupByDate, dateGroupLabel } from "../lib/groupByDate";
-import { HistoryCard } from "../components/history/HistoryCard";
-import { HistoryDateGroup } from "../components/history/HistoryDateGroup";
-import { HistoryEntryRow } from "../components/history/HistoryEntryRow";
+import { todayISO } from "../lib/dateRange";
 import SelectModal, { type SelectSection } from "../components/SelectModal";
 import { loadErrorText } from "../lib/api/gateErrors";
-import { format } from "date-fns";
-import { getDateFnsLocale } from "../lib/i18n/dateFnsLocale";
-import { computeStreak } from "../lib/exercise/streak";
 import { activityGroupKeys, activityLabel, groupEntriesByActivity, type ActivityLookups } from "../lib/exercise/activityNames";
 import { exerciseParts } from "../lib/exercise/combine";
 
@@ -50,22 +43,6 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 const SLOT_NUMBERS = [1, 2, 3, 4, 5];
-// Monday-first short weekday names in the app language (2024-01-01 was a Monday).
-function weekdayLabels(language: string): string[] {
-  return Array.from({ length: 7 }, (_, i) =>
-    format(new Date(2024, 0, 1 + i), "EEE", { locale: getDateFnsLocale(language) }),
-  );
-}
-
-// Mon=0 ... Sun=6, fixed regardless of today (matches the website's weekly chart).
-function mondayIndex(dateStr: string): number {
-  const day = new Date(`${dateStr}T00:00:00`).getDay();
-  return (day + 6) % 7;
-}
-
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
 
 export default function ExerciseScreen() {
   const { colors } = useTheme();
@@ -84,7 +61,7 @@ export default function ExerciseScreen() {
   const [renamingSlot, setRenamingSlot] = useState<number | null>(null);
   const [activityFilter, setActivityFilter] = useState("all");
   const [activityFilterPickerOpen, setActivityFilterPickerOpen] = useState(false);
-  const [expandedActivities, setExpandedActivities] = useState<Set<string>>(new Set());
+  const [manageOpen, setManageOpen] = useState(false);
 
   const refreshActivities = useCallback(() => {
     const onFail = (err: unknown) => setActivitiesError(loadErrorText(err, t("Exercise:activitiesLoadError")));
@@ -200,45 +177,20 @@ export default function ExerciseScreen() {
     ]);
   }
 
-  function entryValueLabel(entry: ExerciseEntry): string {
-    return t("Exercise:minutesShort", { count: entry.duration_minutes ?? 0 });
-  }
-
-  function toggleActivityExpanded(key: string) {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedActivities((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }
-
   const slotFor = (slot: number) => customActivities.find((a) => a.slot === slot);
+  const today = todayISO();
 
-  const weekStart = isoDaysAgo(6);
-  const weekEntries = entries.filter((e) => e.event_date >= weekStart);
-  const weekTotalMinutes = weekEntries.reduce((sum, e) => sum + (e.duration_minutes ?? 0), 0);
-  const byDay = [0, 0, 0, 0, 0, 0, 0];
-  for (const e of weekEntries) byDay[mondayIndex(e.event_date)] += e.duration_minutes ?? 0;
-  const chartData = weekdayLabels(i18n.language).map((label, i) => ({ label, value: byDay[i] }));
-  const todayIdx = mondayIndex(todayISO());
-  const streak = computeStreak(entries);
-
-  // A combined row matches / is grouped under each of its activities.
+  // A combined row matches each of its activities.
   const filteredEntries =
     activityFilter === "all" ? entries : entries.filter((e) => activityGroupKeys(e).includes(activityFilter));
-  const activityGroups = groupEntriesByActivity(filteredEntries, activityDisplayName);
+  // Total entries per activity (over the whole history, not just the tab).
+  const totals = new Map(groupEntriesByActivity(entries, activityDisplayName).map((g) => [g.key, g.items.length]));
 
-  // The latest row's minutes for THIS activity (a combined row's share).
-  function groupSummary(group: { items: ExerciseEntry[]; minutes: Map<string, number> }): string {
-    const { items } = group;
-    const countText = formatIcuPlural(t("Common:entryCount"), items.length, i18n.language);
-    return `${countText} · ${t("Common:latestEntryPreview", {
-      value: t("Exercise:minutesShort", { count: group.minutes.get(items[0].sk) ?? 0 }),
-      date: dateGroupLabel(items[0].event_date),
-    })}`;
-  }
+  // Tabs: All + one per named custom activity slot (share a value with the filter).
+  const tabs = customActivities
+    .filter((c) => (c.name ?? "").trim())
+    .sort((a, b) => a.slot - b.slot)
+    .map((c) => ({ key: `id:${c.id}`, name: (c.name ?? "").trim() }));
 
   // "My Activities" (named custom slots) first, then each activity type's
   // own category — mirrors web's useActivities() grouping.
@@ -247,7 +199,7 @@ export default function ExerciseScreen() {
   const activityFilterSections: SelectSection[] = [
     { title: "", data: [{ label: t("Exercise:allActivities"), value: "all" }] },
     ...(namedCustom.length
-      ? [{ title: "My Activities", data: namedCustom.map((c) => ({ label: c.name, value: `id:${c.id}` })) }]
+      ? [{ title: t("Exercise:myActivities"), data: namedCustom.map((c) => ({ label: c.name, value: `id:${c.id}` })) }]
       : []),
     ...Object.entries(
       activityTypes.reduce<Record<string, ActivityType[]>>((acc, a) => {
@@ -268,21 +220,7 @@ export default function ExerciseScreen() {
       contentContainerStyle={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onPullRefresh} tintColor={colors.navTint} />}
     >
-      <View style={styles.card}>
-        <View style={styles.statHeader}>
-          <View>
-            <Text style={styles.statLabel}>{t("Exercise:thisWeek").toUpperCase()}</Text>
-            <Text style={styles.statValue}>{weekTotalMinutes}m</Text>
-            <Text style={styles.body}>{formatIcuPlural(t("Exercise:sessionCount"), weekEntries.length, i18n.language)}</Text>
-          </View>
-          {streak > 0 && (
-            <Text style={styles.streakBadge}>
-              🔥 {formatIcuPlural(t("Exercise:streakDays"), streak, i18n.language)}
-            </Text>
-          )}
-        </View>
-        <BarChart data={chartData} highlightIndex={todayIdx} />
-      </View>
+      <ExerciseWeekCard entries={entries} today={today} />
 
       <ExerciseComposer
         editingEntry={editingEntry}
@@ -293,76 +231,98 @@ export default function ExerciseScreen() {
         onCancelEdit={() => setEditingEntry(null)}
       />
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>{t("Exercise:myActivitiesTitle")}</Text>
-        <Text style={styles.body}>{t("Exercise:myActivitiesSubtitle")}</Text>
-        {SLOT_NUMBERS.map((slot) => {
-          const activity = slotFor(slot);
-          return (
-            <View key={slot} style={styles.slotRow}>
-              <AnimatedPressable style={{ flex: 1 }} onPress={() => setRenamingSlot(slot)}>
-                <Text style={activity ? styles.inputText : styles.inputPlaceholder}>
-                  {activity ? (activity.name ?? "").trim() || t("Exercise:unnamedActivity") : `Slot ${slot} — tap to add`}
-                </Text>
-              </AnimatedPressable>
-              {activity && (
-                <AnimatedPressable onPress={() => onClearSlot(slot)}>
-                  <Text style={styles.removeText}>{t("Exercise:remove")}</Text>
-                </AnimatedPressable>
-              )}
-            </View>
-          );
-        })}
+      <View style={styles.historyHeader}>
+        <Text style={styles.historyTitle}>{t("Exercise:historyTitle")}</Text>
+        <View style={styles.controls}>
+          <AnimatedPressable
+            style={[styles.control, styles.filterControl]}
+            onPress={() => setActivityFilterPickerOpen(true)}
+            accessibilityLabel={t("Exercise:filterByActivity")}
+          >
+            <Text style={styles.controlText} numberOfLines={1}>
+              {activityFilterLabel}
+            </Text>
+          </AnimatedPressable>
+          <AnimatedPressable
+            style={styles.control}
+            onPress={() => {
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              setManageOpen((v) => !v);
+            }}
+            accessibilityState={{ expanded: manageOpen }}
+          >
+            <Text style={styles.controlText} numberOfLines={1}>
+              {t("Exercise:manageActivities")}
+            </Text>
+          </AnimatedPressable>
+        </View>
       </View>
+
+      {manageOpen && (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{t("Exercise:myActivitiesTitle")}</Text>
+          <Text style={styles.body}>{t("Exercise:myActivitiesSubtitle")}</Text>
+          {SLOT_NUMBERS.map((slot) => {
+            const activity = slotFor(slot);
+            return (
+              <View key={slot} style={styles.slotRow}>
+                <AnimatedPressable style={{ flex: 1 }} onPress={() => setRenamingSlot(slot)}>
+                  <Text style={activity ? styles.inputText : styles.inputPlaceholder}>
+                    {activity ? (activity.name ?? "").trim() || t("Exercise:unnamedActivity") : `Slot ${slot} — tap to add`}
+                  </Text>
+                </AnimatedPressable>
+                {activity && (
+                  <AnimatedPressable onPress={() => onClearSlot(slot)}>
+                    <Text style={styles.removeText}>{t("Exercise:remove")}</Text>
+                  </AnimatedPressable>
+                )}
+              </View>
+            );
+          })}
+        </View>
+      )}
 
       {activitiesError && <Text style={styles.loadErrorText}>{activitiesError}</Text>}
 
-      <View style={styles.filterRow}>
-        <Text style={styles.sectionTitle}>{t("Exercise:historyTitle")}</Text>
-        <AnimatedPressable style={styles.filterTrigger} onPress={() => setActivityFilterPickerOpen(true)}>
-          <Text style={styles.filterTriggerText} numberOfLines={1}>
-            {activityFilterLabel}
-          </Text>
-        </AnimatedPressable>
-      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsScroll} contentContainerStyle={styles.tabs}>
+        {[{ key: "all", name: t("Exercise:allActivities") }, ...tabs].map((tab) => {
+          const on = activityFilter === tab.key;
+          return (
+            <AnimatedPressable
+              key={tab.key}
+              style={[styles.tab, on && styles.tabActive]}
+              onPress={() => setActivityFilter(tab.key)}
+              accessibilityState={{ selected: on }}
+              scaleTo={0.98}
+            >
+              <Text style={[styles.tabText, on && styles.tabTextActive]} numberOfLines={1}>
+                {tab.name}
+              </Text>
+            </AnimatedPressable>
+          );
+        })}
+      </ScrollView>
 
       {loading ? (
         <ActivityIndicator color={colors.navTint} />
-      ) : activityGroups.length === 0 ? (
-        <View style={styles.card}>
-          <Text style={styles.body}>{error ?? t("Exercise:noWorkoutsTitle")}</Text>
+      ) : filteredEntries.length === 0 ? (
+        <View style={styles.empty}>
+          <Text style={styles.emptyTitle}>
+            {error ?? (activityFilter === "all" ? t("Exercise:noWorkoutsTitle") : t("Exercise:noWorkoutsForActivity"))}
+          </Text>
+          {!error && activityFilter === "all" && <Text style={styles.body}>{t("Exercise:noWorkoutsSubtitle")}</Text>}
         </View>
       ) : (
-        activityGroups.map((group) => {
-          const dateGroups = groupByDate(group.items, (e) => e.event_date);
-          const expanded = expandedActivities.has(group.key);
-          return (
-            <HistoryCard
-              key={group.key}
-              title={group.name}
-              summaryText={groupSummary(group)}
-              expanded={expanded}
-              onToggle={() => toggleActivityExpanded(group.key)}
-              expandLabel={t("Common:expandHistory", { title: group.name })}
-              collapseLabel={t("Common:collapseHistory", { title: group.name })}
-            >
-              {dateGroups.map((dateGroup) => (
-                <HistoryDateGroup key={dateGroup.label} label={dateGroup.label}>
-                  {dateGroup.items.map((entry) => (
-                    <HistoryEntryRow
-                      key={entry.sk}
-                      title={entryTitle(entry)}
-                      subtitle={entry.intensity ? capitalize(entry.intensity) : undefined}
-                      value={entryValueLabel(entry)}
-                      onPress={() => setEditingEntry(entry)}
-                      onLongPress={() => onDelete(entry.sk)}
-                    />
-                  ))}
-                </HistoryDateGroup>
-              ))}
-            </HistoryCard>
-          );
-        })
+        // key: a new tab starts again from the first 10 sessions.
+        <ExerciseTimeline
+          key={activityFilter}
+          entries={filteredEntries}
+          today={today}
+          titleFor={entryTitle}
+          totalFor={(entry) => totals.get(activityGroupKeys(entry)[0]) ?? 1}
+          onEdit={(entry) => setEditingEntry(entry)}
+          onDelete={onDelete}
+        />
       )}
 
       <TextPromptModal
@@ -387,31 +347,38 @@ export default function ExerciseScreen() {
 function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.background },
-    container: { padding: 24, gap: 16, paddingBottom: 40 },
-    title: { fontSize: typography.title.fontSize, fontWeight: "600", letterSpacing: -0.3, color: colors.foreground },
+    container: { padding: 16, gap: 12, paddingBottom: 40 },
     card: {
       backgroundColor: colors.card,
-      borderRadius: 24,
+      borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: colors.border,
-      padding: 20,
-      gap: 10,
+      padding: 16,
+      gap: 8,
     },
-    statHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-    statLabel: { fontSize: 11, fontWeight: "600", color: colors.mutedForeground, letterSpacing: 0.5 },
-    statValue: { fontSize: 28, fontWeight: "700", color: colors.foreground },
-    streakBadge: { fontSize: typography.bodySmall.fontSize, fontWeight: "600", color: colors.foreground },
-    sectionTitle: { fontSize: typography.sectionTitle.fontSize, fontWeight: "600", color: colors.foreground },
-    filterRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-    filterTrigger: {
-      maxWidth: 160,
+    cardTitle: { fontSize: 16, fontWeight: "800", color: colors.foreground },
+    historyHeader: { gap: 10, marginTop: 8 },
+    historyTitle: { fontSize: 22, fontWeight: "800", color: colors.foreground },
+    controls: { flexDirection: "row", gap: 8 },
+    control: {
+      minHeight: 40,
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 999,
-      paddingVertical: 6,
+      borderRadius: radius.md,
       paddingHorizontal: 14,
+      alignItems: "center",
+      justifyContent: "center",
     },
-    filterTriggerText: { fontSize: typography.bodySmall.fontSize, color: colors.foreground, fontWeight: "500" },
+    filterControl: { flex: 1 },
+    controlText: { fontSize: 13, fontWeight: "700", color: colors.foreground },
+    tabsScroll: { flexGrow: 0, borderBottomWidth: 1, borderBottomColor: colors.border },
+    tabs: { gap: 20 },
+    tab: { minHeight: 44, justifyContent: "center", borderBottomWidth: 2, borderBottomColor: "transparent" },
+    tabActive: { borderBottomColor: colors.orange },
+    tabText: { fontSize: 14, fontWeight: "500", color: colors.mutedForeground },
+    tabTextActive: { fontWeight: "800", color: colors.primary },
+    empty: { gap: 4, paddingTop: 8 },
+    emptyTitle: { fontSize: 14, fontWeight: "700", color: colors.foreground },
     inputText: { color: colors.foreground },
     inputPlaceholder: { color: colors.mutedForeground },
     body: { fontSize: 14, color: colors.mutedForeground },
@@ -425,6 +392,6 @@ function makeStyles(colors: ColorPalette) {
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
     },
-    removeText: { color: colors.destructive, fontSize: typography.bodySmall.fontSize, fontWeight: "500" },
+    removeText: { color: colors.destructive, fontSize: 13, fontWeight: "600" },
   });
 }

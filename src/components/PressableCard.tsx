@@ -1,7 +1,7 @@
 import { useMemo, type ReactNode } from "react";
 import { StyleSheet, type StyleProp, type ViewStyle } from "react-native";
 import { useTheme } from "../theme/ThemeContext";
-import type { ColorPalette } from "../theme/palettes";
+import { radius, type ColorPalette } from "../theme/palettes";
 import { AnimatedPressable } from "./AnimatedPressable";
 
 // Shared "card that's also a button" — the raised bordered surface used
@@ -40,7 +40,7 @@ function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
     card: {
       backgroundColor: colors.card,
-      borderRadius: 24,
+      borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: colors.border,
       padding: 20,

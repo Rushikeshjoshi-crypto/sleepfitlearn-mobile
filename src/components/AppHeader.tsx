@@ -30,6 +30,6 @@ function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
     row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
     rightGroup: { flexDirection: "row", alignItems: "center", gap: 8 },
-    title: { fontSize: typography.title.fontSize, fontWeight: "600", letterSpacing: -0.3, color: colors.foreground },
+    title: { fontSize: typography.title.fontSize, fontWeight: "800", letterSpacing: -0.3, color: colors.foreground },
   });
 }

@@ -5,39 +5,25 @@ import { useTranslation } from "react-i18next";
 import { getInsights, type Correlation, type DailyRecord } from "../lib/api/insights";
 import { ApiError } from "../lib/api/client";
 import { getUserProfile, updateUserProfile, type UserProfile } from "../lib/api/users";
-import { formatIcuPlural } from "../lib/i18n/icuPlural";
-import {
-  METRIC_COLOR,
-  METRIC_GLYPH,
-  POSSIBLE_PAIRS,
-  describeCorrelation,
-  metricLabel,
-  pairKey,
-  strengthLabel,
-} from "../lib/insights/metrics";
+import { describeCorrelation, metricLabel, pairKey } from "../lib/insights/metrics";
 import { useTheme } from "../theme/ThemeContext";
-import { typography, type ColorPalette } from "../theme/palettes";
+import { radius, typography, type ColorPalette } from "../theme/palettes";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { isoDaysAgo } from "../lib/dateRange";
 import { InsightsConsentGate } from "../components/insights/InsightsConsentGate";
 import { PairDetailModal, type CoveragePair } from "../components/insights/PairDetailModal";
 import { AnimatedPressable } from "../components/AnimatedPressable";
+import { AssociationCard, PairIcons, StrengthMeter } from "../components/insights/AssociationCard";
+import { CoverageStrip } from "../components/insights/CoverageStrip";
 import { loadErrorText } from "../lib/api/gateErrors";
 
 type RangePreset = "30d" | "90d";
 const RANGE_PRESET_DAYS: Record<RangePreset, number> = { "30d": 30, "90d": 90 };
 
-const STRENGTH_TONE: Record<Correlation["strength"], (colors: ColorPalette) => string> = {
-  negligible: (colors) => colors.mutedForeground,
-  weak: (colors) => colors.mutedForeground,
-  moderate: (colors) => colors.accent,
-  strong: (colors) => colors.primary,
-};
-
 export default function InsightsScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { t, i18n } = useTranslation("Insights");
+  const { t } = useTranslation("Insights");
   const { t: tc } = useTranslation("Common");
 
   const [correlations, setCorrelations] = useState<Correlation[]>([]);
@@ -139,9 +125,9 @@ export default function InsightsScreen() {
     load(next);
   }
 
-  const foundPairKeys = new Set(correlations.map((c) => pairKey(c)));
-  // Strongest association first, same as web.
+  // Strongest association first (shown large), the rest as a list - same as web.
   const sortedCorrelations = [...correlations].sort((a, b) => Math.abs(b.r) - Math.abs(a.r));
+  const [top, ...rest] = sortedCorrelations;
 
   if (loading) {
     return (
@@ -194,78 +180,38 @@ export default function InsightsScreen() {
         </View>
       )}
 
-      {!error && (
-        <View style={styles.coverageCard}>
-          <Text style={styles.coverageTitle}>{t("patternCoverage")}</Text>
-          <View style={styles.coverageWrap}>
-            {POSSIBLE_PAIRS.map((pair) => {
-              const matched = foundPairKeys.has(pairKey(pair));
-              return (
-                <AnimatedPressable
-                  key={pairKey(pair)}
-                  style={[styles.coverageChip, matched ? styles.coverageChipMatched : styles.coverageChipUnmatched]}
-                  onPress={() => setOpenPair(pair)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t("pairDetail.openPairAria", {
-                    a: metricLabel(pair.metric_a, t),
-                    b: metricLabel(pair.metric_b, t),
-                  })}
-                >
-                  <Text style={styles.coverageGlyph}>{METRIC_GLYPH[pair.metric_a]}</Text>
-                  <Text style={styles.coverageLabel}>
-                    {metricLabel(pair.metric_a, t)}
-                  </Text>
-                  <Text style={styles.coverageArrow}>→</Text>
-                  <Text style={styles.coverageLabel}>
-                    {metricLabel(pair.metric_b, t)}
-                  </Text>
-                  <Text style={styles.coverageGlyph}>{METRIC_GLYPH[pair.metric_b]}</Text>
-                </AnimatedPressable>
-              );
-            })}
-          </View>
-          <Text style={styles.coverageHint}>{t("dashedPairsHint")}</Text>
-        </View>
-      )}
-
-      {correlations.length === 0 && !error ? (
-        <View style={styles.card}>
+      {!error && correlations.length === 0 ? (
+        <View style={styles.emptyCard}>
           <Text style={styles.emptyTitle}>{t("keepLoggingTitle")}</Text>
           <Text style={styles.body}>{t("keepLoggingDescription")}</Text>
         </View>
-      ) : (
-        sortedCorrelations.map((c, index) => {
-          const magnitudePct = Math.round(Math.min(1, Math.abs(c.r)) * 100);
-          const barColor = STRENGTH_TONE[c.strength](colors);
-          return (
-            <View key={`${c.metric_a}-${c.metric_b}-${index}`} style={styles.card}>
-              <View style={styles.cardHeaderRow}>
-                <View style={styles.metricIconsRow}>
-                  <View style={[styles.metricBadge, { backgroundColor: `${METRIC_COLOR[c.metric_a]}22` }]}>
-                    <Text style={styles.metricGlyph}>{METRIC_GLYPH[c.metric_a]}</Text>
-                  </View>
-                  <Text style={styles.arrow}>→</Text>
-                  <View style={[styles.metricBadge, { backgroundColor: `${METRIC_COLOR[c.metric_b]}22` }]}>
-                    <Text style={styles.metricGlyph}>{METRIC_GLYPH[c.metric_b]}</Text>
-                  </View>
-                </View>
-                <View style={[styles.strengthBadge, { backgroundColor: `${barColor}22` }]}>
-                  <Text style={[styles.strengthBadgeText, { color: barColor }]}>
-                    {strengthLabel(c.strength, t)} {t("associationSuffix")}
-                  </Text>
-                </View>
-              </View>
+      ) : null}
 
-              <Text style={styles.body}>{describeCorrelation(c, t)}</Text>
+      {!error && top ? <AssociationCard correlation={top} daily={daily} /> : null}
 
-              <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { width: `${magnitudePct}%`, backgroundColor: barColor }]} />
+      {!error && rest.length > 0 && (
+        <View style={styles.card}>
+          <Text style={styles.sectionLabel}>{t("morePatterns")}</Text>
+          {rest.map((c) => (
+            <AnimatedPressable
+              key={pairKey(c)}
+              style={styles.patternRow}
+              onPress={() => setOpenPair(c)}
+              accessibilityRole="button"
+              accessibilityLabel={t("pairDetail.openPairAria", { a: metricLabel(c.metric_a, t), b: metricLabel(c.metric_b, t) })}
+            >
+              <PairIcons correlation={c} />
+              <View style={styles.patternText}>
+                <Text style={styles.patternSentence}>{describeCorrelation(c, t)}</Text>
+                <StrengthMeter strength={c.strength} />
               </View>
-              <Text style={styles.basedOnDays}>{formatIcuPlural(t("basedOnDays"), c.n, i18n.language)}</Text>
-            </View>
-          );
-        })
+              <Text style={styles.chevron}>›</Text>
+            </AnimatedPressable>
+          ))}
+        </View>
       )}
+
+      {!error && <CoverageStrip correlations={correlations} daily={daily} onOpenPair={setOpenPair} />}
 
       {!error && <Text style={styles.disclaimer}>{t("disclaimer")}</Text>}
 
@@ -284,77 +230,52 @@ function makeStyles(colors: ColorPalette) {
   screen: { flex: 1, backgroundColor: colors.background },
   container: { padding: 24, gap: 12, paddingBottom: 40 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background },
-  title: { fontSize: typography.title.fontSize, fontWeight: "600", letterSpacing: -0.3, color: colors.foreground },
+  title: { fontSize: typography.title.fontSize, fontWeight: "800", letterSpacing: -0.3, color: colors.foreground },
   subtitle: { fontSize: 14, color: colors.mutedForeground, marginBottom: 4 },
   rangeRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   rangeSpinner: { marginLeft: 4 },
   turnOffButton: { marginLeft: "auto", minHeight: 44, justifyContent: "center", paddingHorizontal: 8 },
   turnOffText: { fontSize: 13, color: colors.mutedForeground },
-  emptyTitle: { fontSize: 16, fontWeight: "600", color: colors.foreground },
+  emptyTitle: { fontSize: 18, fontWeight: "800", color: colors.foreground },
   disclaimer: { fontSize: typography.label.fontSize, color: colors.mutedForeground, marginTop: 4 },
   card: {
     backgroundColor: colors.card,
-    borderRadius: 24,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 20,
+    padding: 16,
+    gap: 4,
+  },
+  emptyCard: {
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 24,
     gap: 8,
-  },
-  cardHeaderRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
-  metricIconsRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  metricBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 14,
     alignItems: "center",
-    justifyContent: "center",
   },
-  metricGlyph: { fontSize: 16 },
-  arrow: { fontSize: 13, color: colors.mutedForeground },
-  strengthBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  strengthBadgeText: { fontSize: 11, fontWeight: "600" },
-  body: { fontSize: 14, color: colors.mutedForeground },
-  progressTrack: { height: 6, borderRadius: 999, backgroundColor: colors.muted, overflow: "hidden", marginTop: 4 },
-  progressFill: { height: "100%", borderRadius: 999 },
-  basedOnDays: { fontSize: typography.label.fontSize, color: colors.mutedForeground },
+  sectionLabel: { fontSize: 12, fontWeight: "800", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4 },
+  patternRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    minHeight: 56,
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  patternText: { flex: 1, gap: 6 },
+  patternSentence: { fontSize: 14, color: colors.foreground },
+  chevron: { fontSize: 22, color: colors.mutedForeground },
+  body: { fontSize: 14, color: colors.mutedForeground, textAlign: "center" },
   errorBox: {
     borderWidth: 1,
     borderColor: colors.destructiveBorder,
     backgroundColor: colors.destructiveBg,
-    borderRadius: 20,
+    borderRadius: radius.lg,
     padding: 12,
   },
   errorText: { color: colors.destructive },
-  coverageCard: {
-    backgroundColor: colors.card,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 20,
-    gap: 8,
-  },
-  coverageTitle: {
-    fontSize: typography.label.fontSize,
-    fontWeight: "600",
-    color: colors.mutedForeground,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-  },
-  coverageWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  coverageChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  coverageChipMatched: { borderColor: `${colors.primary}55`, backgroundColor: `${colors.primary}0D` },
-  coverageChipUnmatched: { borderColor: colors.border, borderStyle: "dashed" },
-  coverageGlyph: { fontSize: 13 },
-  coverageLabel: { fontSize: 12, fontWeight: "500", color: colors.foreground },
-  coverageArrow: { fontSize: 11, color: colors.mutedForeground },
-  coverageHint: { fontSize: typography.label.fontSize, color: colors.mutedForeground },
   });
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Linking, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
@@ -16,11 +16,12 @@ import CheckoutWebViewModal, {
 } from "../components/billing/CheckoutWebViewModal";
 import type { AppStackParamList } from "../navigation/AppNavigator";
 import { useTheme } from "../theme/ThemeContext";
-import { typography, type ColorPalette } from "../theme/palettes";
+import { radius, typography, type ColorPalette } from "../theme/palettes";
 import { AppHeader } from "../components/AppHeader";
 import { AnimatedPressable } from "../components/AnimatedPressable";
 import { loadErrorText } from "../lib/api/gateErrors";
 // $4.99 / £3.99 with real decimals (was rounded to "$5" / "£4").
+import { COUNTRY_CODES } from "../lib/data/countryCodes";
 import { formatPrice } from "../lib/billing/formatPrice";
 
 // Custom scheme registered in AndroidManifest and passed to Stripe's
@@ -170,27 +171,61 @@ export default function BillingScreen() {
 
   const included = [t("Billing:includedLine1"), t("Billing:includedLine2"), t("Billing:includedLine3")];
   const pill = profile ? statusPill(profile.subscription_status, profile.trial_ends_at, t) : null;
+  const status = profile?.subscription_status ?? null;
+  const active = status === "active";
+  const trialEnd = status === "trialing" && profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null;
+  const daysLeft = trialEnd ? Math.max(0, Math.ceil((trialEnd.getTime() - Date.now()) / 86_400_000)) : null;
+  const country = COUNTRY_CODES.find((c) => c.code === profile?.country_code);
+  const date = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 
   return (
-    <View style={styles.screen}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <AppHeader title={t("Billing:pageTitle")} />
+      <Text style={styles.description}>{t("Billing:pageDescription")}</Text>
+      {pill && (
+        <View style={[styles.pill, PILL_TONE_STYLES[pill.tone](colors)]}>
+          <Text style={[styles.pillText, PILL_TONE_TEXT_STYLES[pill.tone](colors)]}>{pill.label}</Text>
+        </View>
+      )}
 
+      {/* Your subscription */}
       <View style={styles.card}>
-        <Text style={styles.description}>{t("Billing:pageDescription")}</Text>
+        <Text style={styles.cardLabel}>{t("Billing:statusCardTitle")}</Text>
+        {loading && !profile ? (
+          <ActivityIndicator color={colors.primary} style={styles.loader} />
+        ) : (
+          <Text style={styles.statusText}>{pill?.label ?? "—"}</Text>
+        )}
+        {daysLeft !== null && daysLeft > 0 && (
+          <Text style={styles.mutedText}>{t("Billing:daysLeft", { count: daysLeft })}</Text>
+        )}
+        <View style={styles.facts}>
+          {trialEnd && profile?.trial_ends_at && <Fact styles={styles} label={t("Billing:trialEndsLabel")} value={date(profile.trial_ends_at)} />}
+          {profile?.created_at ? <Fact styles={styles} label={t("Billing:memberSince")} value={date(profile.created_at)} /> : null}
+        </View>
+      </View>
+
+      {/* The plan (highlighted) */}
+      <View style={styles.planCard}>
+        <View style={styles.planHeader}>
+          <Text style={styles.planTitle}>{t("Billing:planTitle")}</Text>
+          {active && (
+            <View style={styles.yourPlan}>
+              <Text style={styles.yourPlanText}>{t("Billing:yourPlan")}</Text>
+            </View>
+          )}
+        </View>
 
         <View style={styles.priceRow}>
-          {loading || !pricing ? (
-            <ActivityIndicator color={colors.navTint} />
-          ) : (
+          {loading && !pricing ? (
+            <ActivityIndicator color={colors.primaryForeground} />
+          ) : pricing ? (
             <View style={styles.priceGroup}>
               <Text style={styles.priceText}>{formatPrice(pricing.amount, pricing.currency)}</Text>
               <Text style={styles.intervalText}>/{pricing.interval}</Text>
             </View>
-          )}
-          {pill && (
-            <View style={[styles.pill, PILL_TONE_STYLES[pill.tone](colors)]}>
-              <Text style={[styles.pillText, PILL_TONE_TEXT_STYLES[pill.tone](colors)]}>{pill.label}</Text>
-            </View>
+          ) : (
+            <Text style={styles.planText}>{t("Billing:pricingLoadError")}</Text>
           )}
         </View>
 
@@ -201,25 +236,38 @@ export default function BillingScreen() {
           </View>
         ))}
 
-        {pricing?.countryMissing && (
-          <Text style={styles.countryWarning}>
-            {t("Billing:countryMissingWarning")}{" "}
-            <Text style={styles.link} onPress={() => navigation.navigate("Settings")}>
-              {t("Billing:setCountryLink")}
-            </Text>
-          </Text>
+        {active ? (
+          <Text style={styles.subscribedNote}>{t("Billing:subscribedNote")}</Text>
+        ) : (
+          <AnimatedPressable style={styles.subscribeButton} onPress={onSubscribe} disabled={busy || loading}>
+            {busy ? (
+              <ActivityIndicator color={colors.primary} size="small" />
+            ) : (
+              <Text style={styles.subscribeButtonText}>{t("Billing:subscribe")}</Text>
+            )}
+          </AnimatedPressable>
         )}
 
-        <AnimatedPressable style={styles.subscribeButton} onPress={onSubscribe} disabled={busy || loading}>
-          {busy ? (
-            <ActivityIndicator color={colors.primaryForeground} size="small" />
-          ) : (
-            <Text style={styles.subscribeButtonText}>{t("Billing:subscribe")}</Text>
-          )}
-        </AnimatedPressable>
+        {infoMessage && <Text style={styles.planText}>{infoMessage}</Text>}
+        {errorMessage && <Text style={styles.planErrorText}>{errorMessage}</Text>}
+      </View>
 
-        {infoMessage && <Text style={styles.infoText}>{infoMessage}</Text>}
-        {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+      {/* Payment details */}
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>{t("Billing:paymentCardTitle")}</Text>
+        <Fact styles={styles} label={t("Billing:paymentMethodLabel")} value={pricing ? pricing.gateway : "—"} capitalize />
+        <Fact
+          styles={styles}
+          label={t("Billing:countryCurrencyLabel")}
+          value={`${country ? `${country.flag} ${country.name}` : t("Billing:notSetBilling")}${pricing?.currency ? ` · ${pricing.currency}` : ""}`}
+        />
+        {pricing?.countryMissing && <Text style={styles.mutedText}>{t("Billing:countryMissingWarning")}</Text>}
+        <View style={styles.facts}>
+          <Text style={styles.link} onPress={() => navigation.navigate("Settings")}>
+            {t("Billing:setCountryLink")}
+          </Text>
+          <Text style={styles.mutedSmall}>{t("Billing:countryNote")}</Text>
+        </View>
       </View>
 
       <CheckoutWebViewModal
@@ -229,57 +277,101 @@ export default function BillingScreen() {
         onRazorpayMessage={onRazorpayMessage}
         onStripeRedirect={onStripeRedirect}
       />
+    </ScrollView>
+  );
+}
+
+function Fact({
+  styles,
+  label,
+  value,
+  capitalize,
+}: {
+  styles: ReturnType<typeof makeStyles>;
+  label: string;
+  value: string;
+  capitalize?: boolean;
+}) {
+  return (
+    <View style={styles.fact}>
+      <Text style={styles.factLabel}>{label}</Text>
+      <Text style={[styles.factValue, capitalize && styles.capitalize]}>{value}</Text>
     </View>
   );
 }
 
 const PILL_TONE_STYLES: Record<StatusTone, (colors: ColorPalette) => { backgroundColor: string }> = {
   primary: (colors) => ({ backgroundColor: `${colors.primary}1A` }),
-  accent: (colors) => ({ backgroundColor: `${colors.navTint}1A` }),
+  accent: (colors) => ({ backgroundColor: `${colors.primary}1A` }),
   muted: (colors) => ({ backgroundColor: colors.muted }),
   destructive: (colors) => ({ backgroundColor: `${colors.destructive}1A` }),
 };
 const PILL_TONE_TEXT_STYLES: Record<StatusTone, (colors: ColorPalette) => { color: string }> = {
   primary: (colors) => ({ color: colors.primary }),
-  accent: (colors) => ({ color: colors.navTint }),
+  accent: (colors) => ({ color: colors.primary }),
   muted: (colors) => ({ color: colors.mutedForeground }),
   destructive: (colors) => ({ color: colors.destructive }),
 };
 
 function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    screen: { flex: 1, backgroundColor: colors.background, padding: 24, gap: 16 },
+    screen: { flex: 1, backgroundColor: colors.background },
+    content: { padding: 16, gap: 16, paddingBottom: 40 },
+    description: { fontSize: typography.bodySmall.fontSize, color: colors.mutedForeground, marginTop: -8 },
+    pill: { alignSelf: "flex-start", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
+    pillText: { fontSize: typography.label.fontSize, fontWeight: "700" },
     card: {
       backgroundColor: colors.card,
-      borderRadius: 24,
+      borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: colors.border,
-      padding: 20,
-      gap: 12,
+      padding: 16,
+      gap: 10,
     },
-    description: { fontSize: typography.bodySmall.fontSize, color: colors.mutedForeground },
-    priceRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
+    cardLabel: { fontSize: 12, fontWeight: "800", letterSpacing: 0.8, textTransform: "uppercase", color: colors.mutedForeground },
+    loader: { alignSelf: "flex-start" },
+    statusText: { fontSize: 24, fontWeight: "800", letterSpacing: -0.3, color: colors.foreground },
+    mutedText: { fontSize: typography.bodySmall.fontSize, color: colors.mutedForeground },
+    mutedSmall: { fontSize: 12, color: colors.mutedForeground },
+    facts: { gap: 8, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12, marginTop: 4 },
+    fact: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
+    factLabel: { fontSize: 14, color: colors.mutedForeground },
+    factValue: { flexShrink: 1, fontSize: 14, fontWeight: "700", color: colors.foreground, textAlign: "right" },
+    capitalize: { textTransform: "capitalize" },
+    planCard: { backgroundColor: colors.primary, borderRadius: radius.lg, padding: 16, gap: 12 },
+    planHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+    planTitle: { fontSize: 16, fontWeight: "800", color: colors.primaryForeground },
+    yourPlan: { backgroundColor: colors.primaryForeground, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
+    yourPlanText: { fontSize: 12, fontWeight: "800", color: colors.primary },
+    priceRow: { minHeight: 48, justifyContent: "center" },
     priceGroup: { flexDirection: "row", alignItems: "baseline", gap: 4 },
-    priceText: { fontSize: 40, fontWeight: "700", color: colors.foreground },
-    intervalText: { fontSize: typography.bodySmall.fontSize, color: colors.mutedForeground },
-    pill: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
-    pillText: { fontSize: typography.label.fontSize, fontWeight: "600" },
+    priceText: { fontSize: 44, fontWeight: "800", letterSpacing: -0.5, color: colors.primaryForeground },
+    intervalText: { fontSize: typography.bodySmall.fontSize, color: colors.primaryForeground, opacity: 0.85 },
     includedRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
-    checkGlyph: { color: colors.primary, fontSize: 14, marginTop: 2 },
-    includedText: { flex: 1, fontSize: typography.body.fontSize, color: colors.foreground },
-    countryWarning: { fontSize: typography.label.fontSize, color: colors.mutedForeground },
-    link: { color: colors.navTint, textDecorationLine: "underline" },
+    checkGlyph: { color: colors.primaryForeground, fontSize: 14, marginTop: 2 },
+    includedText: { flex: 1, fontSize: typography.body.fontSize, color: colors.primaryForeground },
+    link: { color: colors.primary, fontWeight: "700", fontSize: 14 },
     subscribeButton: {
-      backgroundColor: colors.primary,
-      borderRadius: 999,
+      backgroundColor: colors.primaryForeground,
+      borderRadius: radius.md,
       paddingVertical: 14,
       alignItems: "center",
       marginTop: 8,
       minHeight: 44,
       justifyContent: "center",
     },
-    subscribeButtonText: { color: colors.primaryForeground, fontSize: 16, fontWeight: "600" },
-    infoText: { fontSize: typography.bodySmall.fontSize, color: colors.mutedForeground },
-    errorText: { fontSize: typography.bodySmall.fontSize, color: colors.destructive },
+    subscribeButtonText: { color: colors.primary, fontSize: 16, fontWeight: "800" },
+    subscribedNote: {
+      marginTop: 8,
+      borderWidth: 1,
+      borderColor: colors.primaryForeground,
+      borderRadius: radius.md,
+      paddingVertical: 10,
+      textAlign: "center",
+      fontWeight: "800",
+      color: colors.primaryForeground,
+    },
+    planText: { fontSize: typography.bodySmall.fontSize, color: colors.primaryForeground },
+    planErrorText: { fontSize: typography.bodySmall.fontSize, fontWeight: "700", color: colors.primaryForeground },
   });
 }

@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   LayoutAnimation,
   Platform,
   Pressable,
@@ -19,14 +18,15 @@ import type { AppStackParamList } from "../navigation/AppNavigator";
 import { useTranslation } from "react-i18next";
 import { getTodaySummary, isTracking, type ScreenTimeTodaySummary } from "../lib/native/screenTime";
 import { getSyncEnabled as getHealthConnectSyncEnabled } from "../lib/healthConnect/preference";
-import { averageDailyScreenTime, effectiveScreenTimeEvents } from "../lib/habits/screenTimeAverage";
+import { effectiveScreenTimeEvents } from "../lib/habits/screenTimeAverage";
+import { mondayOf } from "../lib/habits/habitDays";
+import { errorReason } from "../lib/habits/errorReason";
 import {
   listContextEvents,
   deleteContextEvent,
   type ContextEvent,
   type ContextEventType,
   prepareHabitHistory,
-  topApps as sumAppsByPackage,
 } from "../lib/api/context";
 import {
   createRoutineTask,
@@ -34,17 +34,20 @@ import {
   listRoutineTasks,
   type RoutineTask,
 } from "../lib/api/routineTasks";
-import { groupByDate } from "../lib/groupByDate";
-import { isoDaysAgo } from "../lib/dateRange";
+import { todayISO } from "../lib/dateRange";
 import { formatMinutes } from "../lib/formatMinutes";
-import { formatIcuPlural } from "../lib/i18n/icuPlural";
 import { useTheme } from "../theme/ThemeContext";
-import { typography, type ColorPalette } from "../theme/palettes";
+import { radius, typography, type ColorPalette } from "../theme/palettes";
 import { AnimatedPressable } from "../components/AnimatedPressable";
 import { AppHeader } from "../components/AppHeader";
 import { SegmentedControl } from "../components/SegmentedControl";
 import TextPromptModal from "../components/TextPromptModal";
 import { HabitEventEditModal } from "../components/habits/HabitEventEditModal";
+import { HabitsTodayCard } from "../components/habits/HabitsTodayCard";
+import { HabitsWeekCard } from "../components/habits/HabitsWeekCard";
+import { HabitsMonthCard } from "../components/habits/HabitsMonthCard";
+import { MostUsedAppsCard } from "../components/habits/MostUsedAppsCard";
+import { HabitHistoryCard } from "../components/habits/HabitHistoryCard";
 import { loadErrorText } from "../lib/api/gateErrors";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -53,44 +56,30 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
 
 const REFRESH_INTERVAL_MS = 30_000;
 
-// No icon library on mobile — small glyphs stand in for the website's
-// per-type icons (habitMeta.ts: Smartphone / ListChecks).
-const EVENT_TYPE_GLYPH: Record<ContextEventType, string> = {
-  screen_time: "📱",
-  routine: "✅",
-};
-
-function eventValueLabel(event: ContextEvent): string {
-  if (event.event_type === "screen_time") {
-    return formatMinutes(event.metadata?.minutes ?? 0);
-  }
-  return `${event.metadata?.adherence_pct ?? 0}%`;
-}
-
-
-type Tab = "screenTime" | "routine";
+type Filter = "all" | ContextEventType;
 
 export default function HabitsScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { t, i18n } = useTranslation(["Habits", "Common", "Nav"]);
+  const { t } = useTranslation(["Habits", "Common", "Nav"]);
   const EVENT_TYPE_LABEL: Record<ContextEventType, string> = {
     screen_time: t("Habits:eventTypes.screen_time"),
     routine: t("Habits:eventTypes.routine"),
   };
 
-  // Same segmented-tab pattern as StudyScreen (Study Sessions / Exam Logs) —
-  // Screen Time and Daily Routine each render fully expanded, so splitting
-  // them into tabs (instead of stacking both) keeps the screen from growing
-  // to 4 full cards' worth of scroll.
-  const [tab, setTab] = useState<Tab>("screenTime");
+  // The All habits filter narrows the dashboard (week ring, consistency,
+  // apps chart, routine checklist, history tabs) to one habit type.
+  const [filter, setFilter] = useState<Filter>("all");
+  const [historyTab, setHistoryTab] = useState<ContextEventType>("screen_time");
+  const today = todayISO();
+  const [selectedDay, setSelectedDay] = useState(today);
+  const [weekStart, setWeekStart] = useState(() => mondayOf(today));
   const [enabled, setEnabled] = useState(false);
   const [summary, setSummary] = useState<ScreenTimeTodaySummary | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [history, setHistory] = useState<ContextEvent[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState<string | null>(null);
-  const [historyExpanded, setHistoryExpanded] = useState(false);
-  const [expandedAppGroups, setExpandedAppGroups] = useState<Set<string>>(new Set());
   // Events being edited (one day's merged screen_time rows, or one routine row).
   const [editingEvents, setEditingEvents] = useState<ContextEvent[] | null>(null);
 
@@ -108,9 +97,9 @@ export default function HabitsScreen() {
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const [tracking, today] = await Promise.all([isTracking(), getTodaySummary()]);
+    const [tracking, todaySummary] = await Promise.all([isTracking(), getTodaySummary()]);
     setEnabled(tracking);
-    setSummary(today);
+    setSummary(todaySummary);
   }, []);
 
   const refreshHistory = useCallback(() => {
@@ -118,8 +107,12 @@ export default function HabitsScreen() {
       // Events without a real event_date are skipped (a null one used to make
       // the whole history fail to load); see prepareHabitHistory.
       // A screen time day with a snapshot is shown from it alone (its old delta rows would double-count).
-      .then((events) => setHistory(prepareHabitHistory(effectiveScreenTimeEvents(events))))
-      .catch((err) => setHistoryError(loadErrorText(err, t("Habits:loadHistoryError"))));
+      .then((events) => {
+        setHistory(prepareHabitHistory(effectiveScreenTimeEvents(events)));
+        setHistoryError(null);
+      })
+      .catch((err) => setHistoryError(loadErrorText(err, t("Habits:loadHistoryError"))))
+      .finally(() => setHistoryLoading(false));
   }, [t]);
 
   const refreshHealthConnect = useCallback(async () => {
@@ -182,55 +175,38 @@ export default function HabitsScreen() {
     }
   }
 
-  function onDeleteTask(id: string) {
-    Alert.alert(t("Habits:deleteTaskTitle"), t("Habits:deleteTaskBody"), [
+  // Confirms first, shows a loading state on the row, shows the server's own
+  // reason when it fails and re-reads the list so it matches the server.
+  function onDeleteTask(task: RoutineTask) {
+    Alert.alert(t("Habits:deleteTaskTitle"), `"${task.text}"\n${t("Habits:deleteTaskBody")}`, [
       { text: t("Common:cancel"), style: "cancel" },
       {
         text: t("Common:delete"),
         style: "destructive",
         onPress: async () => {
-          setDeletingTaskId(id);
+          setDeletingTaskId(task.id);
           try {
-            await deleteRoutineTask(id);
+            await deleteRoutineTask(task.id);
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-            setRoutineTasks((prev) => prev.filter((t) => t.id !== id));
+            setRoutineTasks((prev) => prev.filter((x) => x.id !== task.id));
             setCheckedTaskIds((prev) => {
-              if (!prev.has(id)) return prev;
+              if (!prev.has(task.id)) return prev;
               const next = new Set(prev);
-              next.delete(id);
+              next.delete(task.id);
               return next;
             });
           } catch (err) {
-            Alert.alert(t("Habits:deleteTaskErrorTitle"), err instanceof Error ? err.message : t("Habits:tryAgainShort"));
+            Alert.alert(
+              t("Habits:deleteTaskErrorTitle"),
+              t("Habits:deleteFailedWithReason", { reason: errorReason(err, t("Habits:networkErrorReason")) }),
+            );
+            await refreshRoutineTasks();
           } finally {
             setDeletingTaskId(null);
           }
         },
       },
     ]);
-  }
-
-
-  const groups = groupByDate(history, (e) => e.event_date);
-
-  // Collapsed-by-default summary line, matching the web app's
-  // HabitHistoryBox — mobile has one combined history list (not two
-  // separate boxes per event type, since its data model never split
-  // screen_time/routine into separate feeds), so this summarizes across
-  // whichever event is actually newest overall.
-  let historySummaryText: string | null = null;
-  if (historyError) {
-    historySummaryText = historyError;
-  } else if (history.length === 0) {
-    historySummaryText = t("Habits:noEntriesLoggedYet");
-  } else {
-    const entryCountText = formatIcuPlural(t("Habits:entryCount"), history.length, i18n.language);
-    const latest = history[0];
-    const latestDateLabel = groups[0]?.label ?? "";
-    historySummaryText = `${entryCountText} · ${t("Habits:latestEntryPreview", {
-      value: eventValueLabel(latest),
-      date: latestDateLabel,
-    })}`;
   }
 
   // Same as web's HabitEventRow delete: a merged screen-time day deletes every
@@ -263,59 +239,13 @@ export default function HabitsScreen() {
     );
   }
 
-  function renderEventActions(events: ContextEvent[]) {
-    return (
-      <View style={styles.eventActions}>
-        <AnimatedPressable
-          style={styles.eventActionButton}
-          onPress={() => setEditingEvents(events)}
-          accessibilityRole="button"
-          accessibilityLabel={t("Common:editEntry")}
-        >
-          <Text style={styles.eventActionGlyph}>✎</Text>
-        </AnimatedPressable>
-        <AnimatedPressable
-          style={styles.eventActionButton}
-          onPress={() => confirmDeleteEvents(events)}
-          accessibilityRole="button"
-          accessibilityLabel={t("Common:deleteEntry")}
-        >
-          <Text style={[styles.eventActionGlyph, styles.eventDeleteGlyph]}>🗑</Text>
-        </AnimatedPressable>
-      </View>
-    );
+  function onSelectDay(date: string) {
+    setSelectedDay(date);
+    setWeekStart(mondayOf(date));
   }
 
-  function toggleHistoryExpanded() {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setHistoryExpanded((v) => !v);
-  }
-
-  function toggleAppGroup(label: string) {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedAppGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(label)) next.delete(label);
-      else next.add(label);
-      return next;
-    });
-  }
-
-  // "This Week" + "Most used app" both read the same trailing-7-day slice of
-  // history (mirrors the website's HabitsStatsStrip weekStart calculation).
-  const weekStart = isoDaysAgo(6);
-  const thisWeekEvents = history.filter((e) => e.event_date >= weekStart);
-  const thisWeekScreenTime = thisWeekEvents.filter((e) => e.event_type === "screen_time");
-  const thisWeekRoutine = thisWeekEvents.filter((e) => e.event_type === "routine");
-  // Per day (a day's sync rows added up first) — lib/habits/screenTimeAverage, same as web.
-  const avgDailyMinutes = averageDailyScreenTime(thisWeekScreenTime);
-  const avgAdherence = thisWeekRoutine.length
-    ? Math.round(thisWeekRoutine.reduce((sum, e) => sum + (e.metadata?.adherence_pct ?? 0), 0) / thisWeekRoutine.length)
-    : null;
-
-  const mostUsedApps = sumAppsByPackage(thisWeekScreenTime);
-  const topApp = mostUsedApps[0] ?? null;
-  const topApps = mostUsedApps.slice(0, 3);
+  const showScreenTime = filter !== "routine";
+  const showRoutine = filter !== "screen_time";
 
   return (
     <ScrollView
@@ -344,186 +274,62 @@ export default function HabitsScreen() {
 
       <SegmentedControl
         options={[
-          { value: "screenTime" as const, label: t("Habits:eventTypes.screen_time") },
+          { value: "all" as const, label: t("Habits:allHabits") },
+          { value: "screen_time" as const, label: t("Habits:eventTypes.screen_time") },
           { value: "routine" as const, label: t("Habits:eventTypes.routine") },
         ]}
-        value={tab}
-        onChange={setTab}
+        value={filter}
+        onChange={setFilter}
       />
 
-      {tab === "screenTime" && (
-        <>
-          {!enabled && (
-            <AnimatedPressable style={styles.card} onPress={() => navigation.navigate("Connections")} accessibilityRole="button">
-              <Text style={styles.body}>{t("Habits:turnOnInConnections")}</Text>
-            </AnimatedPressable>
-          )}
-
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>{t("Common:today")}</Text>
-            <Text style={styles.totalMinutes}>
-              {formatMinutes(summary?.totalMinutes ?? 0)} {t("Habits:screenTimeEmptyLabel")}
-            </Text>
-
-            {!summary || summary.apps.length === 0 ? (
-              <Text style={styles.body}>{t("Habits:noAppUsageToday")}</Text>
-            ) : (
-              <FlatList
-                data={[...summary.apps].sort((a, b) => b.minutesUsed - a.minutesUsed)}
-                keyExtractor={(item) => item.packageName}
-                scrollEnabled={false}
-                renderItem={({ item }) => (
-                  <View style={styles.appRow}>
-                    <Text style={styles.appName}>{item.appName}</Text>
-                    <Text style={styles.body}>{formatMinutes(item.minutesUsed)}</Text>
-                  </View>
-                )}
-              />
-            )}
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.thisWeekLabel}>{t("Habits:thisWeek")}</Text>
-            {avgDailyMinutes === null && avgAdherence === null ? (
-              <Text style={styles.body}>{t("Habits:noEntriesThisWeek")}</Text>
-            ) : (
-              <View style={styles.thisWeekRow}>
-                <View style={styles.thisWeekStat}>
-                  <Text style={styles.thisWeekValue}>
-                    {avgDailyMinutes !== null ? formatMinutes(avgDailyMinutes) : "—"}
-                  </Text>
-                  <Text style={styles.thisWeekCaption}>
-                    {t("Habits:avgDailyScreenTime")} ·{" "}
-                    {formatIcuPlural(t("Habits:entryCount"), thisWeekScreenTime.length, i18n.language)}
-                  </Text>
-                </View>
-                <View style={styles.thisWeekStat}>
-                  <Text style={styles.thisWeekValue}>{avgAdherence !== null ? `${avgAdherence}%` : "—"}</Text>
-                  <Text style={styles.thisWeekCaption}>
-                    {t("Habits:avgRoutineAdherence")} ·{" "}
-                    {formatIcuPlural(t("Habits:entryCount"), thisWeekRoutine.length, i18n.language)}
-                  </Text>
-                </View>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>{t("Habits:mostUsedAppTitle")}</Text>
-            <Text style={styles.thisWeekCaption}>{t("Habits:mostUsedAppPeriod")}</Text>
-
-            {!topApp ? (
-              <Text style={styles.body}>{t("Habits:noAppUsageThisWeek")}</Text>
-            ) : (
-              <>
-                <View style={styles.topAppRow}>
-                  <Text style={styles.topAppGlyph}>{EVENT_TYPE_GLYPH.screen_time}</Text>
-                  <View style={styles.topAppInfo}>
-                    <Text style={styles.topAppName}>{topApp.app_name}</Text>
-                    <Text style={styles.topAppMinutes}>{formatMinutes(topApp.minutes_used)}</Text>
-                  </View>
-                </View>
-                {topApps.map((app, index) => (
-                  <View key={app.package_name} style={styles.appRow}>
-                    <Text style={styles.appName}>
-                      {index + 1}. {app.app_name}
-                    </Text>
-                    <Text style={styles.body}>{formatMinutes(app.minutes_used)}</Text>
-                  </View>
-                ))}
-              </>
-            )}
-          </View>
-
-          <View style={styles.card}>
-            <AnimatedPressable
-              style={styles.historyHeaderRow}
-              onPress={toggleHistoryExpanded}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: historyExpanded }}
-              accessibilityLabel={
-                historyExpanded
-                  ? t("Habits:collapseHistory", { title: t("Habits:historyTitle") })
-                  : t("Habits:expandHistory", { title: t("Habits:historyTitle") })
-              }
-            >
-              <Text style={styles.sectionTitle}>{t("Habits:historyTitle")}</Text>
-              {historySummaryText && <Text style={styles.historySummary}>{historySummaryText}</Text>}
-            </AnimatedPressable>
-
-            {historyExpanded && (
-              groups.map((group) => {
-                // The tracker syncs every ~20-30 min, so one day can have many
-                // screen_time rows — collapse those into a single daily total
-                // instead of listing every sync interval separately.
-                const screenTimeEvents = group.items.filter((e) => e.event_type === "screen_time");
-                const screenTimeTotal = screenTimeEvents.reduce((sum, e) => sum + (e.metadata?.minutes ?? 0), 0);
-                const otherEvents = group.items.filter((e) => e.event_type !== "screen_time");
-                const groupApps = sumAppsByPackage(screenTimeEvents);
-                const groupExpanded = expandedAppGroups.has(group.label);
-
-                return (
-                  <View key={group.label} style={styles.historyGroup}>
-                    <Text style={styles.historyGroupLabel}>{group.label}</Text>
-                    {screenTimeTotal > 0 && (
-                      groupApps.length > 0 ? (
-                        <>
-                          <AnimatedPressable
-                            style={styles.appRow}
-                            onPress={() => toggleAppGroup(group.label)}
-                            accessibilityRole="button"
-                            accessibilityState={{ expanded: groupExpanded }}
-                            accessibilityLabel={
-                              groupExpanded ? t("Habits:hideAppBreakdown") : t("Habits:showAppBreakdown")
-                            }
-                          >
-                            <Text style={styles.appName}>
-                              {EVENT_TYPE_GLYPH.screen_time} {EVENT_TYPE_LABEL.screen_time}{" "}
-                              {groupExpanded ? "▾" : "▸"}
-                            </Text>
-                            <Text style={styles.body}>{formatMinutes(screenTimeTotal)}</Text>
-                            {renderEventActions(screenTimeEvents)}
-                          </AnimatedPressable>
-                          {groupExpanded &&
-                            groupApps.map((app) => (
-                              <View key={app.package_name} style={styles.subAppRow}>
-                                <Text style={styles.body}>{app.app_name}</Text>
-                                <Text style={styles.body}>{formatMinutes(app.minutes_used)}</Text>
-                              </View>
-                            ))}
-                        </>
-                      ) : (
-                        <View style={styles.appRow}>
-                          <Text style={styles.appName}>
-                            {EVENT_TYPE_GLYPH.screen_time} {EVENT_TYPE_LABEL.screen_time}
-                          </Text>
-                          <Text style={styles.body}>{formatMinutes(screenTimeTotal)}</Text>
-                          {renderEventActions(screenTimeEvents)}
-                        </View>
-                      )
-                    )}
-                    {otherEvents.map((event) => (
-                      <View key={event.sk} style={styles.appRow}>
-                        <Text style={styles.appName}>
-                          {EVENT_TYPE_GLYPH[event.event_type]} {EVENT_TYPE_LABEL[event.event_type]}
-                        </Text>
-                        <Text style={styles.body}>{eventValueLabel(event)}</Text>
-                        {renderEventActions([event])}
-                      </View>
-                    ))}
-                  </View>
-                );
-              })
-            )}
-          </View>
-        </>
+      {showScreenTime && !enabled && (
+        <AnimatedPressable style={styles.card} onPress={() => navigation.navigate("Connections")} accessibilityRole="button">
+          <Text style={styles.body}>{t("Habits:turnOnInConnections")}</Text>
+        </AnimatedPressable>
       )}
 
-      {tab === "routine" && (
+      <HabitsTodayCard
+        events={history.filter((e) => filter === "all" || e.event_type === filter)}
+        today={today}
+        selected={selectedDay}
+        weekStart={weekStart}
+        onSelect={setSelectedDay}
+        onWeekChange={setWeekStart}
+        onEdit={setEditingEvents}
+        onDelete={confirmDeleteEvents}
+      />
+
+      {showScreenTime && (
         <View style={styles.card}>
-          <View style={styles.routineHeaderRow}>
-            <Text style={styles.sectionTitle}>{t("Habits:eventTypes.routine")}</Text>
-          </View>
+          <Text style={styles.label}>{t("Common:today")}</Text>
+          <Text style={styles.bigValue}>
+            {formatMinutes(summary?.totalMinutes ?? 0)}{" "}
+            <Text style={styles.bigCaption}>{t("Habits:screenTimeEmptyLabel")}</Text>
+          </Text>
+          {!summary || summary.apps.length === 0 ? (
+            <Text style={styles.body}>{t("Habits:noAppUsageToday")}</Text>
+          ) : (
+            [...summary.apps]
+              .sort((a, b) => b.minutesUsed - a.minutesUsed)
+              .map((item) => (
+                <View key={item.packageName} style={styles.appRow}>
+                  <Text style={styles.appName}>{item.appName}</Text>
+                  <Text style={styles.appMinutes}>{formatMinutes(item.minutesUsed)}</Text>
+                </View>
+              ))
+          )}
+        </View>
+      )}
+
+      <HabitsWeekCard events={history} filter={filter} />
+
+      <HabitsMonthCard events={history} today={today} filter={filter} selected={selectedDay} onSelect={onSelectDay} />
+
+      {showScreenTime && <MostUsedAppsCard events={history} today={today} />}
+
+      {showRoutine && (
+        <View style={styles.card}>
+          <Text style={styles.title}>{t("Habits:eventTypes.routine")}</Text>
 
           <AnimatedPressable style={styles.addTaskButton} onPress={() => setAddTaskModalOpen(true)} disabled={addingTask}>
             {addingTask ? (
@@ -538,7 +344,12 @@ export default function HabitsScreen() {
           ) : routineError ? (
             <View>
               <Text style={styles.errorText}>{routineError}</Text>
-              <Pressable onPress={() => { setRoutineLoading(true); refreshRoutineTasks(); }}>
+              <Pressable
+                onPress={() => {
+                  setRoutineLoading(true);
+                  refreshRoutineTasks();
+                }}
+              >
                 <Text style={styles.retryText}>{t("Habits:tryAgain")}</Text>
               </Pressable>
             </View>
@@ -550,7 +361,7 @@ export default function HabitsScreen() {
                 key={task.id}
                 style={styles.taskRow}
                 onPress={() => toggleTaskChecked(task.id)}
-                onLongPress={() => onDeleteTask(task.id)}
+                onLongPress={() => onDeleteTask(task)}
                 disabled={deletingTaskId === task.id}
               >
                 <Text style={styles.checkGlyph}>{checkedTaskIds.has(task.id) ? "☑" : "☐"}</Text>
@@ -562,6 +373,17 @@ export default function HabitsScreen() {
           <Text style={styles.hintText}>{t("Habits:taskHint")}</Text>
         </View>
       )}
+
+      <HabitHistoryCard
+        events={history}
+        filter={filter}
+        tab={historyTab}
+        onTabChange={setHistoryTab}
+        loading={historyLoading}
+        error={historyError}
+        onEdit={setEditingEvents}
+        onDelete={confirmDeleteEvents}
+      />
 
       <HabitEventEditModal
         events={editingEvents}
@@ -584,29 +406,25 @@ export default function HabitsScreen() {
 
 function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    eventActions: { flexDirection: "row", alignItems: "center", marginLeft: 4 },
-    eventActionButton: { minWidth: 36, minHeight: 36, alignItems: "center", justifyContent: "center" },
-    eventActionGlyph: { fontSize: 15, color: colors.mutedForeground },
-    eventDeleteGlyph: { color: colors.destructive },
     screen: { flex: 1, backgroundColor: colors.background },
-    container: { padding: 24, gap: 16, paddingBottom: 40 },
+    container: { padding: 16, gap: 12, paddingBottom: 40 },
     card: {
       backgroundColor: colors.card,
-      borderRadius: 24,
+      borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: colors.border,
-      padding: 20,
+      padding: 16,
       gap: 8,
     },
-    toggleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
     connectionsRow: { flexDirection: "row", alignItems: "center", gap: 12 },
     chevron: { fontSize: 24, color: colors.mutedForeground },
     toggleLabel: { flex: 1, gap: 2 },
-    toggleTitle: { fontSize: typography.body.fontSize, fontWeight: "600", color: colors.foreground },
+    toggleTitle: { fontSize: typography.body.fontSize, fontWeight: "700", color: colors.foreground },
     toggleSubtitle: { fontSize: typography.bodySmall.fontSize, color: colors.mutedForeground },
-    syncedAt: { fontSize: typography.label.fontSize, color: colors.mutedForeground, marginTop: 4 },
-    sectionTitle: { fontSize: typography.sectionTitle.fontSize, fontWeight: "600", color: colors.foreground },
-    totalMinutes: { fontSize: 28, fontWeight: "700", color: colors.navTint, marginBottom: 4 },
+    label: { fontSize: typography.label.fontSize, fontWeight: "800", color: colors.primary, textTransform: "uppercase", letterSpacing: 0.8 },
+    title: { fontSize: 20, fontWeight: "800", letterSpacing: -0.3, color: colors.foreground },
+    bigValue: { fontSize: 32, fontWeight: "800", letterSpacing: -0.8, color: colors.orange },
+    bigCaption: { fontSize: typography.bodySmall.fontSize, fontWeight: "400", letterSpacing: 0, color: colors.mutedForeground },
     body: { fontSize: typography.body.fontSize, color: colors.mutedForeground },
     appRow: {
       flexDirection: "row",
@@ -615,46 +433,20 @@ function makeStyles(colors: ColorPalette) {
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
     },
-    appName: { fontSize: typography.body.fontSize, fontWeight: "500", color: colors.foreground },
-    subAppRow: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      paddingVertical: 6,
-      paddingLeft: 16,
-    },
-    thisWeekLabel: {
-      fontSize: typography.label.fontSize,
-      fontWeight: "600",
-      color: colors.mutedForeground,
-      textTransform: "uppercase",
-      letterSpacing: 0.5,
-    },
-    thisWeekRow: { flexDirection: "row", gap: 16, marginTop: 4 },
-    thisWeekStat: { flex: 1, gap: 2 },
-    thisWeekValue: { fontSize: 24, fontWeight: "700", color: colors.foreground },
-    thisWeekCaption: { fontSize: typography.label.fontSize, color: colors.mutedForeground },
-    topAppRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 4, marginBottom: 4 },
-    topAppGlyph: { fontSize: 32 },
-    topAppInfo: { flex: 1, gap: 2 },
-    topAppName: { fontSize: typography.sectionTitle.fontSize, fontWeight: "700", color: colors.foreground },
-    topAppMinutes: { fontSize: typography.body.fontSize, color: colors.navTint, fontWeight: "600" },
-    historyHeaderRow: { gap: 2 },
-    historySummary: { fontSize: typography.bodySmall.fontSize, color: colors.mutedForeground },
-    historyGroup: { marginTop: 8 },
-    historyGroupLabel: { fontSize: typography.label.fontSize, fontWeight: "600", color: colors.mutedForeground, marginBottom: 4 },
+    appName: { fontSize: typography.body.fontSize, fontWeight: "600", color: colors.foreground },
+    appMinutes: { fontSize: typography.body.fontSize, fontWeight: "800", color: colors.foreground },
     errorText: { color: colors.destructive },
-    routineHeaderRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
     addTaskButton: {
       backgroundColor: colors.primary,
-      borderRadius: 999,
+      borderRadius: radius.md,
       paddingVertical: 12,
       alignItems: "center",
       marginTop: 4,
     },
-    addTaskButtonText: { color: colors.primaryForeground, fontSize: typography.button.fontSize, fontWeight: "600" },
+    addTaskButtonText: { color: colors.primaryForeground, fontSize: typography.button.fontSize, fontWeight: "700" },
     retryText: { color: colors.navTint, fontWeight: "600", marginTop: 4 },
     taskRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 10, minHeight: 44 },
-    checkGlyph: { fontSize: 18, color: colors.navTint },
+    checkGlyph: { fontSize: 18, color: colors.orange },
     taskText: { flex: 1, fontSize: typography.body.fontSize, color: colors.foreground },
     hintText: { fontSize: typography.label.fontSize, color: colors.mutedForeground, marginTop: 4 },
   });

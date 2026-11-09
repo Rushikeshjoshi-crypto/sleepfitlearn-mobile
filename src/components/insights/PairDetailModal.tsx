@@ -108,17 +108,17 @@ export function PairDetailModal({
 function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
     backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: 20 },
-    card: { backgroundColor: colors.card, borderRadius: 24, maxHeight: "85%" },
+    card: { backgroundColor: colors.card, borderRadius: 8, maxHeight: "85%" },
     content: { padding: 20, gap: 12 },
-    title: { fontSize: typography.title.fontSize, fontWeight: "600", color: colors.foreground },
+    title: { fontSize: typography.title.fontSize, fontWeight: "800", color: colors.foreground },
     body: { fontSize: 14, color: colors.mutedForeground, lineHeight: 20 },
     small: { fontSize: 12, color: colors.mutedForeground },
-    box: { borderRadius: 18, borderWidth: 1, padding: 14, gap: 8 },
+    box: { borderRadius: 6, borderWidth: 1, padding: 14, gap: 8 },
     boxFound: { borderColor: `${colors.primary}40`, backgroundColor: `${colors.primary}0D` },
     boxPending: { borderColor: colors.border, borderStyle: "dashed" },
     boxTitle: { fontSize: 15, fontWeight: "600", color: colors.foreground },
-    track: { height: 8, borderRadius: 999, backgroundColor: colors.muted, overflow: "hidden" },
-    fill: { height: "100%", borderRadius: 999, backgroundColor: colors.navTint },
+    track: { height: 8, borderRadius: 4, backgroundColor: colors.muted, overflow: "hidden" },
+    fill: { height: "100%", borderRadius: 4, backgroundColor: colors.orange },
     buttons: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
     flexButton: { flexGrow: 1 },
   });

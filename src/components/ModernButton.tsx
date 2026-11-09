@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { ActivityIndicator, StyleSheet, Text, type StyleProp, type ViewStyle } from "react-native";
 import { useTheme } from "../theme/ThemeContext";
-import { typography, type ColorPalette } from "../theme/palettes";
+import { radius, typography, type ColorPalette } from "../theme/palettes";
 import { AnimatedPressable } from "./AnimatedPressable";
 
 export type ModernButtonVariant = "primary" | "secondary" | "outline" | "destructive";
@@ -47,7 +47,7 @@ export function ModernButton({
 function makeStyles(colors: ColorPalette) {
   const variants: Record<ModernButtonVariant, ViewStyle> = {
     primary: { backgroundColor: colors.primary },
-    secondary: { backgroundColor: colors.muted },
+    secondary: { backgroundColor: colors.soft, borderWidth: 1, borderColor: colors.border },
     outline: { backgroundColor: "transparent", borderWidth: 1, borderColor: colors.border },
     destructive: { backgroundColor: colors.destructive },
   };
@@ -61,7 +61,7 @@ function makeStyles(colors: ColorPalette) {
   return {
     ...StyleSheet.create({
       base: {
-        borderRadius: 999,
+        borderRadius: radius.md,
         paddingVertical: 14,
         paddingHorizontal: 20,
         alignItems: "center",
@@ -69,7 +69,7 @@ function makeStyles(colors: ColorPalette) {
         minHeight: 44,
       },
       disabled: { opacity: 0.5 },
-      text: { fontSize: typography.body.fontSize, fontWeight: "600" },
+      text: { fontSize: typography.body.fontSize, fontWeight: "700" },
     }),
     variants,
     variantTexts,

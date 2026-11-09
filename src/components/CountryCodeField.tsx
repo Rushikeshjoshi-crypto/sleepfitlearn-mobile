@@ -3,18 +3,21 @@ import { FlatList, Modal, Pressable, SafeAreaView, StyleSheet, Text, View } from
 import { useTranslation } from "react-i18next";
 import { COUNTRY_CODES, type CountryCodeOption } from "../lib/data/countryCodes";
 import { useTheme } from "../theme/ThemeContext";
-import { typography, type ColorPalette } from "../theme/palettes";
+import { radius, typography, type ColorPalette } from "../theme/palettes";
 
 type Props = {
   value: string; // ISO alpha-2 code
   onChange: (code: string) => void;
+  // Override the theme palette (auth pages are always dark).
+  colors?: ColorPalette;
 };
 
 // Compact trigger + slide-up list, no picker dependency needed for a
 // 10-country list — mirrors the shadcn Select used on the web app's
 // register page (Frontend-Next-SleepFitLearn/src/components/auth/SignUpForm.tsx).
-export function CountryCodeField({ value, onChange }: Props) {
-  const { colors } = useTheme();
+export function CountryCodeField({ value, onChange, colors: colorsProp }: Props) {
+  const theme = useTheme();
+  const colors = colorsProp ?? theme.colors;
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation("UI");
   const [open, setOpen] = useState(false);
@@ -68,10 +71,10 @@ function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
     trigger: {
       borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 14,
+      borderColor: colors.input,
+      borderRadius: radius.md,
       paddingHorizontal: 14,
-      paddingVertical: 14,
+      paddingVertical: 13,
       backgroundColor: colors.background,
       justifyContent: "center",
     },
@@ -79,8 +82,8 @@ function makeStyles(colors: ColorPalette) {
     backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" },
     sheet: {
       backgroundColor: colors.card,
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
+      borderTopLeftRadius: radius.lg,
+      borderTopRightRadius: radius.lg,
       maxHeight: "70%",
     },
     sheetHeader: {
@@ -92,8 +95,8 @@ function makeStyles(colors: ColorPalette) {
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
     },
-    sheetTitle: { fontSize: 16, fontWeight: "600", color: colors.foreground },
-    closeText: { fontSize: 14, color: colors.navTint, fontWeight: "500" },
+    sheetTitle: { fontSize: 16, fontWeight: "800", color: colors.foreground },
+    closeText: { fontSize: 14, color: colors.primary, fontWeight: "700" },
     row: {
       flexDirection: "row",
       justifyContent: "space-between",
@@ -101,7 +104,7 @@ function makeStyles(colors: ColorPalette) {
       paddingHorizontal: 20,
       paddingVertical: 14,
     },
-    rowSelected: { backgroundColor: colors.navTint + "1A" },
+    rowSelected: { backgroundColor: colors.primary + "1A" },
     rowText: { fontSize: typography.body.fontSize, color: colors.foreground },
     rowDialCode: { fontSize: typography.body.fontSize, color: colors.mutedForeground },
   });

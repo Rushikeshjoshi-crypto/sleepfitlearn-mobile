@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { StyleSheet, Text } from "react-native";
 import { useTheme } from "../theme/ThemeContext";
-import type { ColorPalette } from "../theme/palettes";
+import { radius, type ColorPalette } from "../theme/palettes";
 import { AnimatedPressable } from "./AnimatedPressable";
 
 // Quick-access theme switch for the Home header — reuses the exact same
@@ -35,10 +35,12 @@ function makeStyles(colors: ColorPalette) {
     button: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: colors.muted,
+      backgroundColor: colors.card,
     },
     icon: { fontSize: 18 },
   });

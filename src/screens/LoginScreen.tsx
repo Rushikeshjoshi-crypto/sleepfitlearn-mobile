@@ -17,15 +17,17 @@ import { ensureUserProfile } from "../lib/api/users";
 import { SUPPORTED_LANGUAGES, setLanguage, type SupportedLanguage } from "../i18n";
 import { useAuth } from "../lib/aws/AuthContext";
 import type { AuthStackParamList } from "../navigation/AuthNavigator";
-import { useTheme } from "../theme/ThemeContext";
-import { typography, type ColorPalette } from "../theme/palettes";
+import { darkColors, type ColorPalette } from "../theme/palettes";
+import { AuthBackground } from "../components/auth/AuthBackground";
+import { makeAuthStyles } from "../components/auth/authStyles";
 import { AnimatedPressable } from "../components/AnimatedPressable";
 import { PasswordField } from "../components/PasswordField";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
 
 export default function LoginScreen({ navigation }: Props) {
-  const { colors } = useTheme();
+  // Auth pages are always dark: the card sits on a photo (web AuthLayout).
+  const colors = darkColors;
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation("Auth");
   const { refresh } = useAuth();
@@ -80,8 +82,9 @@ export default function LoginScreen({ navigation }: Props) {
   }
 
   return (
+    <AuthBackground variant="login">
     <KeyboardAvoidingView
-      style={styles.screen}
+      style={[styles.screen, styles.scrollContent]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.brandRow}>
@@ -108,6 +111,7 @@ export default function LoginScreen({ navigation }: Props) {
           onChangeText={setEmail}
         />
         <PasswordField
+          colors={colors}
           placeholder={t("Login.passwordLabel")}
           autoComplete="off"
           importantForAutofill="no"
@@ -148,71 +152,15 @@ export default function LoginScreen({ navigation }: Props) {
         </Text>
       </AnimatedPressable>
     </KeyboardAvoidingView>
+    </AuthBackground>
   );
 }
 
 function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  screen: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-    gap: 20,
-    backgroundColor: colors.background,
-  },
-  brandRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
-  brandIcon: { width: 28, height: 28, borderRadius: 8 },
-  brandText: { fontSize: 20, fontWeight: "600", letterSpacing: -0.3, color: colors.foreground },
-  brandTextAccent: { fontStyle: "italic", color: colors.navTint },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 28,
-    gap: 12,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 4,
-  },
-  cardHeader: { alignItems: "center", gap: 4, marginBottom: 8 },
-  title: { fontSize: typography.title.fontSize, fontWeight: "600", letterSpacing: -0.3, color: colors.foreground },
-  subtitle: { fontSize: 14, color: colors.mutedForeground, textAlign: "center" },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: colors.foreground,
-    backgroundColor: colors.background,
-  },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: 999,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonText: { color: colors.primaryForeground, fontSize: 16, fontWeight: "600" },
-  forgotPasswordRow: { alignItems: "flex-end" },
-  forgotPasswordText: { color: colors.navTint, fontSize: 14, fontWeight: "500" },
-  link: { color: colors.navTint, textAlign: "center", marginTop: 8, fontWeight: "500" },
-  footerLink: { color: colors.foreground, textAlign: "center" },
-  // Fixed brand gold, not colors.navTint — navTint is theme-adaptive (dark
-  // forest green in light mode, per palettes.ts's own design), which read
-  // as near-black here. This is meant to always be gold, in either theme.
-  footerLinkAccent: { color: "#DAA520", fontWeight: "600" },
-  errorBox: {
-    borderWidth: 1,
-    borderColor: colors.destructiveBorder,
-    backgroundColor: colors.destructiveBg,
-    borderRadius: 20,
-    padding: 12,
-  },
-  errorText: { color: colors.destructive },
+    ...makeAuthStyles(colors),
+    forgotPasswordRow: { alignItems: "flex-end" },
+    forgotPasswordText: { color: colors.orange, fontSize: 14, fontWeight: "600" },
+    link: { color: colors.orange, textAlign: "center", marginTop: 8, fontWeight: "600" },
   });
 }

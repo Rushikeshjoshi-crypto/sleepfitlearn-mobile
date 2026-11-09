@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { createContextEvent, type ContextEventType } from "../../lib/api/context";
 import { AnimatedPressable } from "../AnimatedPressable";
 import { useTheme } from "../../theme/ThemeContext";
-import { typography, type ColorPalette } from "../../theme/palettes";
+import { radius, typography, type ColorPalette } from "../../theme/palettes";
 import { todayISO } from "../../lib/dateRange";
 import { useSingleFlight } from "../../lib/singleFlight";
 
@@ -90,20 +90,20 @@ function makeStyles(colors: ColorPalette) {
     card: { gap: 10 },
     sectionTitle: { fontSize: typography.sectionTitle.fontSize, fontWeight: "600", color: colors.foreground },
     chipRow: { flexDirection: "row", gap: 8 },
-    chip: { borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14 },
+    chip: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingVertical: 8, paddingHorizontal: 14 },
     chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
     chipText: { fontSize: typography.bodySmall.fontSize, color: colors.mutedForeground, fontWeight: "500" },
     chipTextActive: { color: colors.primaryForeground },
     input: {
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 14,
+      borderRadius: radius.md,
       paddingHorizontal: 14,
       paddingVertical: 12,
       fontSize: typography.body.fontSize,
       color: colors.foreground,
     },
-    button: { backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 12, alignItems: "center" },
+    button: { backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 12, alignItems: "center" },
     buttonText: { color: colors.primaryForeground, fontSize: typography.button.fontSize, fontWeight: "600" },
   });
 }

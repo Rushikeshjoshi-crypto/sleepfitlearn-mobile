@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, SafeAreaView, SectionList, StyleSheet, Text, TextInput, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme/ThemeContext";
-import { typography, type ColorPalette } from "../theme/palettes";
+import { radius, typography, type ColorPalette } from "../theme/palettes";
 
 export type SelectOption = { label: string; value: string; sublabel?: string };
 export type SelectSection = { title: string; data: SelectOption[] };
@@ -123,7 +123,7 @@ export default function SelectModal({
 function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" },
-  sheet: { backgroundColor: colors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: "75%" },
+  sheet: { backgroundColor: colors.card, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, maxHeight: "75%" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -132,8 +132,8 @@ function makeStyles(colors: ColorPalette) {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  title: { fontSize: 17, fontWeight: "600", color: colors.foreground },
-  closeText: { color: colors.navTint, fontWeight: "500" },
+  title: { fontSize: 17, fontWeight: "800", color: colors.foreground },
+  closeText: { color: colors.primary, fontWeight: "700" },
   searchRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -141,7 +141,7 @@ function makeStyles(colors: ColorPalette) {
     marginTop: 12,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 14,
+    borderRadius: radius.md,
     paddingHorizontal: 14,
   },
   searchInput: { flex: 1, paddingVertical: 10, fontSize: typography.body.fontSize, color: colors.foreground },

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View, type GestureResponderEvent, type LayoutChangeEvent } from "react-native";
 import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from "react-native-svg";
 import { useTheme } from "../../theme/ThemeContext";
-import type { ColorPalette } from "../../theme/palettes";
+import { radius, type ColorPalette } from "../../theme/palettes";
 import { CHART_HEIGHT, PAD, formatTick, xLabelIndexes, yScale } from "./chartScale";
 
 export type LineSeriesDef = { key: string; label: string; color: string };
@@ -80,7 +80,7 @@ export function TrendLineChart({
               return (
                 <G key={`r-${r.label}`}>
                   <Line x1={PAD.left} x2={width - PAD.right} y1={y(r.value)} y2={y(r.value)} stroke={colors.border} strokeDasharray="4 4" strokeOpacity={0.8} />
-                  <Rect x={lx} y={ly} width={labelW} height={15} rx={7.5} fill={colors.card} stroke={colors.border} strokeWidth={1} />
+                  <Rect x={lx} y={ly} width={labelW} height={15} rx={4} fill={colors.card} stroke={colors.border} strokeWidth={1} />
                   <SvgText x={lx + labelW / 2} y={ly + 11} fontSize={10} fill={colors.mutedForeground} textAnchor="middle">
                     {r.label}
                   </SvgText>
@@ -157,7 +157,7 @@ function makeStyles(colors: ColorPalette) {
     tooltip: {
       marginTop: 6,
       alignSelf: "flex-start",
-      borderRadius: 12,
+      borderRadius: radius.md,
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.card,
@@ -165,7 +165,7 @@ function makeStyles(colors: ColorPalette) {
       paddingVertical: 6,
       gap: 2,
     },
-    tooltipTitle: { fontSize: 12, fontWeight: "600", color: colors.foreground },
+    tooltipTitle: { fontSize: 12, fontWeight: "800", color: colors.foreground },
     tooltipRow: { fontSize: 12, color: colors.mutedForeground },
     legend: { flexDirection: "row", justifyContent: "center", gap: 16, marginTop: 6 },
     legendItem: { fontSize: 12, color: colors.mutedForeground },

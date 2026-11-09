@@ -19,7 +19,7 @@ import { exerciseDurationMinutes } from "../../lib/exercise/duration";
 import { minutesToHoursAndMinutes } from "../../lib/study/formatMinutes";
 import SelectModal, { type SelectSection } from "../SelectModal";
 import { useTheme } from "../../theme/ThemeContext";
-import { typography, type ColorPalette } from "../../theme/palettes";
+import { radius, typography, type ColorPalette } from "../../theme/palettes";
 import { AnimatedPressable } from "../AnimatedPressable";
 import { localizedName } from "../../lib/i18n/localizedName";
 import { todayISO } from "../../lib/dateRange";
@@ -27,6 +27,7 @@ import { useSingleFlight } from "../../lib/singleFlight";
 import { showSaveError } from "../../lib/ui/apiErrors";
 
 const INTENSITIES = ["low", "moderate", "high"];
+const QUICK_DURATIONS = [15, 30, 45, 60, 90];
 
 function showInfo(message: string) {
   if (Platform.OS === "android") ToastAndroid.show(message, ToastAndroid.SHORT);
@@ -186,6 +187,7 @@ export default function ExerciseComposer({
   return (
     <View style={styles.card}>
       <Text style={styles.sectionTitle}>{editingEntry ? t("Common:editEntry") : t("Exercise:logAWorkout")}</Text>
+      {!editingEntry && <Text style={styles.subtitle}>{t("Exercise:logAWorkoutSubtitle")}</Text>}
 
       {lockedEdit && editingEntry ? (
         <View style={styles.modeBlock}>
@@ -197,9 +199,12 @@ export default function ExerciseComposer({
           <Text style={styles.lockedHint}>{t("Exercise:combinedEditLockedHint")}</Text>
         </View>
       ) : (
-        <AnimatedPressable style={styles.input} onPress={() => setActivityPickerOpen(true)}>
-          <Text style={activityId ? styles.inputText : styles.inputPlaceholder}>{activityName(activityId)}</Text>
-        </AnimatedPressable>
+        <View>
+          <Text style={styles.sublabel}>{t("Exercise:activityLabel")}</Text>
+          <AnimatedPressable style={styles.input} onPress={() => setActivityPickerOpen(true)}>
+            <Text style={activityId ? styles.inputText : styles.inputPlaceholder}>{activityName(activityId)}</Text>
+          </AnimatedPressable>
+        </View>
       )}
 
       {combineTarget && (
@@ -221,6 +226,30 @@ export default function ExerciseComposer({
                 </Text>
               </AnimatedPressable>
             ))}
+          </View>
+        </View>
+      )}
+
+      {!lockedEdit && (
+        <View style={styles.modeBlock}>
+          <Text style={styles.sublabel}>{t("Exercise:durationLabel")}</Text>
+          <View style={styles.chipRow}>
+            {QUICK_DURATIONS.map((d) => {
+              const selected = exerciseDurationMinutes(durationHours, durationMinutesPart) === d;
+              return (
+                <AnimatedPressable
+                  key={d}
+                  style={[styles.chip, selected && styles.chipActive]}
+                  onPress={() => {
+                    const { hours, minutes } = minutesToHoursAndMinutes(d);
+                    setDurationHours(hours ? String(hours) : "");
+                    setDurationMinutesPart(String(minutes));
+                  }}
+                >
+                  <Text style={[styles.chipText, selected && styles.chipTextActive]}>{t("Exercise:minutesShort", { count: d })}</Text>
+                </AnimatedPressable>
+              );
+            })}
           </View>
         </View>
       )}
@@ -252,6 +281,10 @@ export default function ExerciseComposer({
         </View>
       )}
 
+      <View style={styles.modeBlock}>
+        <Text style={styles.sublabel}>
+          {t("Exercise:intensityLabel")} {t("Exercise:optionalSuffix")}
+        </Text>
       <View style={styles.chipRow}>
         {INTENSITIES.map((i) => (
           <AnimatedPressable
@@ -265,7 +298,9 @@ export default function ExerciseComposer({
           </AnimatedPressable>
         ))}
       </View>
+      </View>
 
+      <Text style={styles.sublabel}>{t("Common:notesOptionalLabel")}</Text>
       <TextInput
         style={[styles.input, styles.notesInput]}
         placeholder={t("Exercise:notesPlaceholder")}
@@ -285,7 +320,7 @@ export default function ExerciseComposer({
           {submitting ? (
             <ActivityIndicator color={colors.primaryForeground} />
           ) : (
-            <Text style={styles.buttonText}>{editingEntry ? t("Common:save") : t("Exercise:saveWorkout")}</Text>
+            <Text style={styles.buttonText}>{editingEntry ? t("Common:save") : t("Exercise:addWorkout")}</Text>
           )}
         </AnimatedPressable>
       </View>
@@ -305,20 +340,22 @@ function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
     card: {
       backgroundColor: colors.card,
-      borderRadius: 24,
+      borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: colors.border,
-      padding: 20,
-      gap: 10,
+      padding: 16,
+      gap: 12,
     },
-    sectionTitle: { fontSize: typography.sectionTitle.fontSize, fontWeight: "600", color: colors.foreground },
+    sectionTitle: { fontSize: 18, fontWeight: "800", color: colors.foreground },
+    subtitle: { fontSize: typography.bodySmall.fontSize, color: colors.mutedForeground, marginTop: -8 },
     input: {
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 14,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
+      borderRadius: radius.md,
+      paddingHorizontal: 12,
+      paddingVertical: 11,
       fontSize: typography.body.fontSize,
+      color: colors.foreground,
     },
     inputText: { color: colors.foreground },
     inputPlaceholder: { color: colors.mutedForeground },
@@ -333,18 +370,26 @@ function makeStyles(colors: ColorPalette) {
     chip: {
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 999,
-      paddingVertical: 6,
-      paddingHorizontal: 12,
+      borderRadius: radius.full,
+      paddingVertical: 9,
+      paddingHorizontal: 14,
     },
     chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    chipText: { fontSize: typography.bodySmall.fontSize, color: colors.mutedForeground, fontWeight: "500" },
+    chipText: { fontSize: typography.bodySmall.fontSize, color: colors.foreground, fontWeight: "600" },
     capitalize: { textTransform: "capitalize" },
     chipTextActive: { color: colors.primaryForeground },
     formActions: { flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 },
-    button: { backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 20 },
-    buttonText: { color: colors.primaryForeground, fontSize: typography.button.fontSize, fontWeight: "600" },
-    secondaryButton: { borderRadius: 999, paddingVertical: 12, paddingHorizontal: 20 },
+    button: {
+      flex: 1,
+      minHeight: 48,
+      backgroundColor: colors.primary,
+      borderRadius: radius.md,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 20,
+    },
+    buttonText: { color: colors.primaryForeground, fontSize: typography.button.fontSize, fontWeight: "800" },
+    secondaryButton: { minHeight: 48, justifyContent: "center", paddingHorizontal: 16 },
     secondaryButtonText: { color: colors.mutedForeground, fontSize: typography.button.fontSize, fontWeight: "500" },
   });
 }

@@ -36,6 +36,10 @@ export type UserProfile = {
   // Profile fields hidden (null) and locked for this account right now —
   // height, target weight and sex for 13–17 while minor_data_enabled is off.
   restricted_fields?: string[];
+  // Profile photo: a small JPEG data URL (256x256). Optional: older backends
+  // don't send it. A save that leaves it out keeps the stored photo; null
+  // removes it.
+  avatar?: string | null;
 };
 
 export type AgeBand = "under_13" | "13_17" | "18_plus";
@@ -62,6 +66,7 @@ type EditableUserFields = Pick<
   | "preferred_language"
   | "privacy_settings"
   | "country_code"
+  | "avatar"
 >;
 
 export function getUserProfile(): Promise<UserProfile> {
@@ -131,5 +136,13 @@ export async function updateUserProfile(partial: Partial<EditableUserFields>): P
   // off) the GET shows it as null, so it's left out entirely — the server
   // then keeps the stored goal (same as the web's updateUserProfile).
   if (lockedStepGoal(current)) delete merged.daily_step_goal;
+  // The photo is only sent when it is being changed (set or null = remove).
+  if (!("avatar" in partial)) delete merged.avatar;
   return apiPut<UserProfile>("users", "", merged);
+}
+
+// Sets (JPEG data URL) or removes (null) the profile photo — same call as the
+// web's Settings photo upload.
+export function updateAvatar(avatar: string | null): Promise<UserProfile> {
+  return updateUserProfile({ avatar });
 }

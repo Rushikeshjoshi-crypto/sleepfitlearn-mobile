@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
 import { useTheme } from "../theme/ThemeContext";
-import type { ColorPalette } from "../theme/palettes";
+import { radius, type ColorPalette } from "../theme/palettes";
 
 type Props = Omit<TextInputProps, "secureTextEntry" | "style"> & {
   style?: object;
+  // Override the theme palette (auth pages are always dark).
+  colors?: ColorPalette;
 };
 
-export function PasswordField({ style, ...props }: Props) {
-  const { colors } = useTheme();
+export function PasswordField({ style, colors: colorsProp, ...props }: Props) {
+  const theme = useTheme();
+  const colors = colorsProp ?? theme.colors;
   const styles = makeStyles(colors);
   const [visible, setVisible] = useState(false);
 
@@ -38,10 +41,10 @@ function makeStyles(colors: ColorPalette) {
     wrapper: { justifyContent: "center" },
     input: {
       borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 14,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
+      borderColor: colors.input,
+      borderRadius: radius.md,
+      paddingHorizontal: 14,
+      paddingVertical: 13,
       paddingRight: 44,
       fontSize: 16,
       color: colors.foreground,

@@ -8,7 +8,7 @@ const read = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
 
 test("popup remembers which tile opened it; camera button only for heart rate", () => {
   const src = read("src/screens/PersonalScreen.tsx");
-  expect(src).toMatch(/setVitalsDetailKind\(kind === "bp" \? "bp" : "heart_rate"\)/);
+  expect(src).toMatch(/setVitalsDetailKind\(kind\)/);
   expect(src).toMatch(/onMeasure=\{\s*vitalsDetailKind === "heart_rate"/);
   expect(src).toMatch(/focus=\{vitalsDetailKind\}/);
 });

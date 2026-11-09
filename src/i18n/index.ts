@@ -75,6 +75,7 @@ export async function initI18n(): Promise<void> {
       "Vitals",
       "Watch",
       "HeartCamera",
+      "Home",
     ],
     defaultNS: "Common",
     // Ported message files use next-intl's single-brace interpolation

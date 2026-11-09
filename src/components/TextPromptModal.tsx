@@ -3,7 +3,7 @@ import { Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { AnimatedPressable } from "./AnimatedPressable";
 import { useTheme } from "../theme/ThemeContext";
-import type { ColorPalette } from "../theme/palettes";
+import { radius, type ColorPalette } from "../theme/palettes";
 
 // Alert.prompt is iOS-only in RN — this is the Android-compatible equivalent
 // for the one place free-text entry is needed (naming a custom activity slot).
@@ -65,12 +65,12 @@ export default function TextPromptModal({
 function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
     backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", padding: 24 },
-    card: { backgroundColor: colors.card, borderRadius: 20, padding: 20, gap: 16 },
-    title: { fontSize: 16, fontWeight: "600", color: colors.foreground },
+    card: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 20, gap: 16 },
+    title: { fontSize: 16, fontWeight: "800", color: colors.foreground },
     input: {
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 12,
+      borderRadius: radius.md,
       paddingHorizontal: 14,
       paddingVertical: 10,
       fontSize: 16,
@@ -79,6 +79,6 @@ function makeStyles(colors: ColorPalette) {
     actions: { flexDirection: "row", justifyContent: "flex-end", gap: 20 },
     actionButton: { paddingVertical: 6, paddingHorizontal: 4 },
     cancelText: { color: colors.mutedForeground, fontWeight: "500" },
-    saveText: { color: colors.navTint, fontWeight: "600" },
+    saveText: { color: colors.primary, fontWeight: "700" },
   });
 }

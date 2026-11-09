@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -36,18 +36,13 @@ import {
   isWeightInRange,
 } from "../lib/api/fitness";
 import { todayISO } from "../lib/dateRange";
-import { groupByDate, dateGroupLabel } from "../lib/groupByDate";
-import { groupByKey } from "../lib/groupByKey";
-import { formatIcuPlural } from "../lib/i18n/icuPlural";
-import { HistoryCard } from "../components/history/HistoryCard";
-import { HistoryDateGroup } from "../components/history/HistoryDateGroup";
-import { HistoryEntryRow } from "../components/history/HistoryEntryRow";
 import SelectModal, { type SelectSection } from "../components/SelectModal";
 import { useTheme } from "../theme/ThemeContext";
-import { typography, type ColorPalette } from "../theme/palettes";
+import { radius, typography, type ColorPalette } from "../theme/palettes";
 import { AnimatedPressable } from "../components/AnimatedPressable";
 import { ModernButton } from "../components/ModernButton";
 import CalendarModal from "../components/CalendarModal";
+import { formatIcuPlural } from "../lib/i18n/icuPlural";
 import { loadErrorText } from "../lib/api/gateErrors";
 import { useSingleFlight } from "../lib/singleFlight";
 import { showSaveError } from "../lib/ui/apiErrors";
@@ -62,21 +57,19 @@ import {
   type RangeBand,
 } from "../lib/vitals/ranges";
 import { sourceLabel } from "../lib/vitals/sourceLabel";
-import { RangeDot } from "../components/vitals/RangeDot";
 import { VitalsPersonalSection } from "../components/vitals/VitalsPersonalSection";
 import { EnergyDetailSection } from "../components/energy/EnergyDetailSection";
 import { BlurBackdrop } from "../components/BlurBackdrop";
-import { bloodPressureTile, energyBar, heartRateTile, tileEntry, type VitalsTile } from "../lib/vitals/tile";
+import { MetricChips } from "../components/personal/MetricChips";
+import { MetricFocus } from "../components/personal/MetricFocus";
+import { PersonalTimeline } from "../components/personal/PersonalTimeline";
+import { defaultKind, rangeStart, type RangeKey } from "../lib/personal/metricStats";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
 type MetricKey = "weight" | "bp" | SimpleMetricType;
-
-// Energy bar colours — the web's EnergyLevelCard emerald-500 / amber-400.
-const ENERGY_GREEN = "#10B981";
-const ENERGY_AMBER = "#FBBF24";
 
 // Translation keys for metric labels — Trends.* has a matching key for most
 // (this same metric catalog backs the Trends charts on web); height_cm and
@@ -138,21 +131,6 @@ function nextChunkEnd(page: PersonalEntry[]): string | null {
   return shiftISO(earliest, -1);
 }
 
-// Tile order for the latest-value grid — same as web's metricConfig.ts VITAL_KINDS.
-const VITAL_KINDS: MetricKey[] = ["weight", "bp", "heart_rate", "waist_cm", "chin_ups", "bench_press", "height_cm", "energy_level"];
-
-function latestDisplay(entry: PersonalEntry): string {
-  if (entry.kind === "bp") return `${entry.systolic ?? "—"} / ${entry.diastolic ?? "—"}`;
-  return String(entry.value);
-}
-
-function entryValueLabel(entry: PersonalEntry): string {
-  if (entry.kind === "bp") return `${entry.systolic} / ${entry.diastolic} ${BP_META.unit}`;
-  if (entry.kind === "weight") return `${entry.value} ${WEIGHT_META.unit}`;
-  // The stored unit: older energy rows were typed in on a 1-5 scale (web shows them the same way).
-  return `${entry.value} ${entry.unit || METRIC_META[entry.kind].unit}`;
-}
-
 export default function PersonalScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -195,9 +173,10 @@ export default function PersonalScreen() {
   const [diastolic, setDiastolic] = useState("");
   const [metricPickerOpen, setMetricPickerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [metricFilter, setMetricFilter] = useState("all");
-  const [metricFilterPickerOpen, setMetricFilterPickerOpen] = useState(false);
-  const [expandedMetrics, setExpandedMetrics] = useState<Set<string>>(new Set());
+  // One metric in focus (chips) and the chart range (web: PersonalView).
+  const [picked, setPicked] = useState<MetricKey | null>(null);
+  const [range, setRange] = useState<RangeKey>("30d");
+  const earlierFailed = useRef(false);
   // The entry's date — defaults to today, set from the entry when editing
   // (web's MetricLogDialog has the same date field).
   const [entryDate, setEntryDate] = useState(todayISO());
@@ -224,8 +203,8 @@ export default function PersonalScreen() {
       });
   }, [t, windowFrom]);
 
-  async function loadEarlier() {
-    if (!nextTo) return;
+  async function loadEarlier(): Promise<boolean> {
+    if (!nextTo) return false;
     const chunk = chunkEndingAt(nextTo);
     setLoadingEarlier(true);
     try {
@@ -234,8 +213,10 @@ export default function PersonalScreen() {
       setEntries((prev) => [...prev, ...page]);
       setWindowFrom(chunk.from);
       setNextTo(nextChunkEnd(page));
+      return true;
     } catch (err) {
       Alert.alert(loadErrorText(err, t("Personal:loadError")));
+      return false;
     } finally {
       setLoadingEarlier(false);
     }
@@ -415,37 +396,24 @@ export default function PersonalScreen() {
   }
 
   const metricSections: SelectSection[] = [{ title: "", data: metricOptions.filter((o) => !isComputed(o.value)) }];
-  const metricFilterSections: SelectSection[] = [
-    { title: "", data: [{ label: t("Personal:allMetrics"), value: "all" }, ...metricOptions] },
-  ];
-  const metricFilterLabel = metricFilter === "all" ? t("Personal:allMetrics") : metricLabel(metricFilter as MetricKey);
+  const shownEntries = (vitalsAllowed ? entries : hideSyncedVitals(entries)).slice().sort((a, b) => b.date.localeCompare(a.date));
+  const kind: MetricKey = picked ?? defaultKind(shownEntries);
+  const kindEntries = shownEntries.filter((e) => e.kind === kind);
+  const from = rangeStart(range, todayISO());
+  const inRange = kindEntries.filter((e) => e.date >= from);
 
-  function toggleMetricExpanded(key: string) {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedMetrics((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
+  // 1Y needs more than the first 90-day window: keep loading older windows
+  // until the year is covered or history ends (same as web).
+  useEffect(() => {
+    earlierFailed.current = false;
+  }, [range]);
+  useEffect(() => {
+    if (range !== "1y" || !nextTo || loadingEarlier || earlierFailed.current || windowFrom <= from) return;
+    loadEarlier().then((ok) => {
+      if (!ok) earlierFailed.current = true;
     });
-  }
-
-  const shownEntries = vitalsAllowed ? entries : hideSyncedVitals(entries);
-  const filteredEntries = metricFilter === "all" ? shownEntries : shownEntries.filter((e) => e.kind === metricFilter);
-  const metricGroups = groupByKey(
-    filteredEntries,
-    (e) => e.kind,
-    (key) => metricLabel(key as MetricKey),
-  );
-
-  function groupSummary(items: PersonalEntry[]): string {
-    const countText = formatIcuPlural(t("Common:entryCount"), items.length, i18n.language);
-    return `${countText} · ${t("Common:latestEntryPreview", {
-      value: entryValueLabel(items[0]),
-      date: dateGroupLabel(items[0].date),
-    })}`;
-  }
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [range, nextTo, loadingEarlier, windowFrom, from]);
   function formatEntryDate(iso: string): string {
     return new Date(`${iso}T00:00:00`).toLocaleDateString(i18n.language, { day: "numeric", month: "short", year: "numeric" });
   }
@@ -456,109 +424,77 @@ export default function PersonalScreen() {
     setFormOpen(true);
   }
 
-  // Heart rate / BP tiles: the latest reading with its source, colour hint
-  // and extreme-value warning (lib/vitals/tile.ts).
-  function vitalsTileFor(latest: PersonalEntry): VitalsTile | null {
-    if (latest.kind === "bp") return bloodPressureTile(latest, ageBand);
-    if (latest.kind === "heart_rate") return heartRateTile(latest);
-    return null;
-  }
-
   return (
     <ScrollView
       style={styles.screen}
       contentContainerStyle={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onPullRefresh} tintColor={colors.navTint} />}
     >
-      {/* Latest value per metric — web's VitalsGrid. */}
-      <View style={styles.tileGrid}>
-        {VITAL_KINDS.map((kind) => {
-          // Energy shows only today's score (blank until logged); others their latest.
-          const latest = tileEntry(shownEntries, kind, todayISO());
-          const opensVitals = vitalsAllowed && (kind === "heart_rate" || kind === "bp");
-          const opensPopup = opensVitals || kind === "energy_level";
-          return (
-            <AnimatedPressable
-              key={kind}
-              style={styles.tile}
-              onPress={kind === "energy_level" ? () => setEnergyDetailOpen(true) : opensVitals ? () => { setVitalsDetailKind(kind === "bp" ? "bp" : "heart_rate"); setVitalsDetailOpen(true); } : undefined}
-              disabled={!opensPopup}
-              accessibilityRole={opensPopup ? "button" : undefined}
-              accessibilityLabel={kind === "energy_level" ? t("Personal:energy.openDetailsAriaLabel") : undefined}
-            >
-              <View style={styles.tileHeader}>
-                <Text style={styles.tileLabel} numberOfLines={1}>
-                  {metricLabel(kind)}
-                </Text>
-                {!isComputed(kind) && (
-                  <AnimatedPressable
-                    style={styles.tileAdd}
-                    onPress={() => startLog(kind)}
-                    accessibilityRole="button"
-                    accessibilityLabel={t("Personal:logMetricAriaLabel", { label: metricLabel(kind) })}
-                  >
-                    <Text style={styles.tileAddText}>+</Text>
-                  </AnimatedPressable>
-                )}
-              </View>
-              {latest ? (
-                <>
-                  {(() => {
-                    const vt = vitalsTileFor(latest);
-                    return (
-                      <>
-                        <View style={styles.tileValueRow}>
-                          <Text style={styles.tileValue}>
-                            {vt ? vt.value : latestDisplay(latest)} <Text style={styles.tileUnit}>{metricUnit(kind)}</Text>
-                          </Text>
-                          {vt && vt.resting == null && <RangeDot band={vt.band} />}
-                        </View>
-                        {vt && vt.resting != null && (
-                          <View style={styles.tileValueRow}>
-                            <Text style={styles.tileMeta}>{t("Vitals:resting", { value: vt.resting })}</Text>
-                            <RangeDot band={vt.band} />
-                          </View>
-                        )}
-                        {vt && (
-                          <Text style={styles.tileMeta} numberOfLines={1}>
-                            {vt.source ?? (latest.kind === "heart_rate" && latest.camera ? t("HeartCamera:sourceLabel") : t("Vitals:manual"))}
-                          </Text>
-                        )}
-                        {vt?.doctor && (
-                          <Text style={styles.tileDoctor} numberOfLines={2}>
-                            ⚠ {t("Vitals:seeDoctor")}
-                          </Text>
-                        )}
-                        {kind === "energy_level" && latest.kind !== "bp" && (() => {
-                          const bar = energyBar(latest.value);
-                          const color = bar.label === "low" ? colors.destructive : bar.label === "moderate" ? ENERGY_AMBER : ENERGY_GREEN;
-                          return (
-                            <>
-                              <Text style={[styles.tileMeta, { color }]}>{t(`Personal:energyLabels.${bar.label}`)}</Text>
-                              <View
-                                style={styles.energyTrack}
-                                accessibilityRole="progressbar"
-                                accessibilityValue={{ min: 0, max: 100, now: bar.percent }}
-                              >
-                                <View style={[styles.energyFill, { width: `${bar.percent}%`, backgroundColor: color }]} />
-                              </View>
-                            </>
-                          );
-                        })()}
-                      </>
-                    );
-                  })()}
-                  <Text style={styles.tileDate}>
-                    {new Date(`${latest.date}T00:00:00`).toLocaleDateString(i18n.language, { day: "numeric", month: "short" })}
-                  </Text>
-                </>
-              ) : (
-                // Energy not logged today: just blank ("—"), not "No entries yet".
-                <Text style={styles.tileEmpty}>{kind === "energy_level" ? "—" : t("Personal:noEntriesYet")}</Text>
-              )}
-            </AnimatedPressable>
-          );
-        })}
+      {isComputed(kind) ? null : (
+        <ModernButton title={`+ ${t("Personal:logMetric", { label: metricLabel(kind) })}`} onPress={() => startLog(kind)} />
+      )}
+
+      <MetricChips entries={shownEntries} selected={kind} onSelect={setPicked} label={t("Personal:pickMetric")} metricLabel={metricLabel} />
+
+      {loading ? (
+        <ActivityIndicator color={colors.orange} />
+      ) : (
+        <MetricFocus
+          kind={kind}
+          label={metricLabel(kind)}
+          fallbackUnit={metricUnit(kind)}
+          entries={kindEntries}
+          inRange={inRange}
+          range={range}
+          onRangeChange={setRange}
+          canLog={!isComputed(kind)}
+          onLog={() => startLog(kind)}
+          detailsLabel={
+            kind === "energy_level"
+              ? t("Personal:energy.openDetailsAriaLabel")
+              : vitalsAllowed && (kind === "heart_rate" || kind === "bp")
+                ? t("Vitals:title")
+                : undefined
+          }
+          onDetails={
+            kind === "energy_level"
+              ? () => setEnergyDetailOpen(true)
+              : vitalsAllowed && (kind === "heart_rate" || kind === "bp")
+                ? () => {
+                    setVitalsDetailKind(kind);
+                    setVitalsDetailOpen(true);
+                  }
+                : undefined
+          }
+        />
+      )}
+
+      <View style={styles.card}>
+        <View style={styles.historyHeader}>
+          <Text style={styles.sectionTitle}>
+            {t("Personal:historyTitle")} · {metricLabel(kind)}
+          </Text>
+          {!loading && !error ? (
+            <Text style={styles.body}>{formatIcuPlural(t("Personal:entriesLoaded"), kindEntries.length, i18n.language)}</Text>
+          ) : null}
+        </View>
+        {!loading && (kind === "heart_rate" || kind === "bp") && kindEntries.length > 0 && (
+          <Text style={styles.vitalsDisclaimer}>{t("Vitals:disclaimer")}</Text>
+        )}
+        {/* key: a new metric starts again from the first 10 rows. */}
+        <PersonalTimeline
+          key={kind}
+          entries={kindEntries}
+          loading={loading}
+          error={error}
+          hasNextPage={!!nextTo}
+          isFetchingNextPage={loadingEarlier}
+          onLoadMore={loadEarlier}
+          vitalsInfo={vitalsInfo}
+          isReadOnly={(e) => isComputed(e.kind)}
+          onEdit={onPressEntry}
+          onDelete={onDelete}
+        />
       </View>
 
       {/* Heart rate & BP details: a popup from the two tiles (connecting stays in Habits → Health Connect). */}
@@ -688,76 +624,6 @@ export default function PersonalScreen() {
         </BlurBackdrop>
       </Modal>
 
-      <View style={styles.filterRow}>
-        <Text style={styles.sectionTitle}>{t("Personal:historyTitle")}</Text>
-        <AnimatedPressable style={styles.filterTrigger} onPress={() => setMetricFilterPickerOpen(true)}>
-          <Text style={styles.filterTriggerText} numberOfLines={1}>
-            {metricFilterLabel}
-          </Text>
-        </AnimatedPressable>
-      </View>
-
-      {loading ? (
-        <ActivityIndicator color={colors.navTint} />
-      ) : null}
-      {!loading && shownEntries.some((e) => e.kind === "heart_rate" || e.kind === "bp") && (
-        <Text style={styles.vitalsDisclaimer}>{t("Vitals:disclaimer")}</Text>
-      )}
-      {loading ? null : metricGroups.length === 0 ? (
-        <View style={styles.card}>
-          <Text style={styles.body}>{error ?? t("Personal:noEntriesYetHistory")}</Text>
-        </View>
-      ) : (
-        metricGroups.map((group) => {
-          const dateGroups = groupByDate(group.items, (e) => e.date);
-          const expanded = expandedMetrics.has(group.key);
-          return (
-            <HistoryCard
-              key={group.key}
-              title={group.name}
-              summaryText={groupSummary(group.items)}
-              expanded={expanded}
-              onToggle={() => toggleMetricExpanded(group.key)}
-              expandLabel={t("Common:expandHistory", { title: group.name })}
-              collapseLabel={t("Common:collapseHistory", { title: group.name })}
-            >
-              {dateGroups.map((dateGroup) => (
-                <HistoryDateGroup key={dateGroup.label} label={dateGroup.label}>
-                  {dateGroup.items.map((entry, index) => {
-                    const info = vitalsInfo(entry);
-                    return (
-                      <HistoryEntryRow
-                        key={`${entry.kind}-${index}`}
-                        title={metricLabel(entry.kind)}
-                        subtitle={info.subtitle}
-                        valueNode={
-                          <View style={styles.valueWithDot}>
-                            <Text style={styles.body}>{info.value ?? entryValueLabel(entry)}</Text>
-                            <RangeDot band={info.band} />
-                          </View>
-                        }
-                        onPress={isComputed(entry.kind) ? undefined : () => onPressEntry(entry)}
-                        onLongPress={isComputed(entry.kind) ? undefined : () => onDelete(entry)}
-                      />
-                    );
-                  })}
-                </HistoryDateGroup>
-              ))}
-            </HistoryCard>
-          );
-        })
-      )}
-
-      {!loading && nextTo && (
-        <AnimatedPressable style={styles.secondaryButton} onPress={loadEarlier} disabled={loadingEarlier}>
-          {loadingEarlier ? (
-            <ActivityIndicator color={colors.navTint} />
-          ) : (
-            <Text style={styles.secondaryButtonText}>{t("Personal:loadEarlierEntries")}</Text>
-          )}
-        </AnimatedPressable>
-      )}
-
       <CalendarModal
         visible={datePickerOpen}
         selectedDate={entryDate}
@@ -778,76 +644,35 @@ export default function PersonalScreen() {
         onClose={() => setMetricPickerOpen(false)}
       />
 
-      <SelectModal
-        visible={metricFilterPickerOpen}
-        title={t("Personal:allMetrics")}
-        sections={metricFilterSections}
-        onSelect={setMetricFilter}
-        onClose={() => setMetricFilterPickerOpen(false)}
-      />
     </ScrollView>
   );
 }
 
 function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    tileGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-    tile: {
-      width: "48%",
-      flexGrow: 1,
-      backgroundColor: colors.card,
-      borderRadius: 18,
-      borderWidth: 1,
-      borderColor: colors.border,
-      padding: 14,
-      gap: 4,
-    },
-    tileHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
-    tileLabel: { flex: 1, fontSize: typography.label.fontSize, fontWeight: "600", color: colors.mutedForeground },
-    tileAdd: { minWidth: 32, minHeight: 32, alignItems: "center", justifyContent: "center" },
-    tileAddText: { fontSize: 20, color: colors.navTint },
-    tileValue: { fontSize: 22, fontWeight: "600", color: colors.foreground },
-    tileUnit: { fontSize: 12, fontWeight: "400", color: colors.mutedForeground },
-    tileDate: { fontSize: 11, color: colors.mutedForeground },
-    tileEmpty: { fontSize: 13, color: colors.mutedForeground, marginTop: 4 },
   screen: { flex: 1, backgroundColor: colors.background },
   container: { padding: 24, gap: 16, paddingBottom: 40 },
-  title: { fontSize: typography.title.fontSize, fontWeight: "600", letterSpacing: -0.3, color: colors.foreground },
+  title: { fontSize: typography.title.fontSize, fontWeight: "800", letterSpacing: -0.3, color: colors.foreground },
   card: {
     backgroundColor: colors.card,
-    borderRadius: 24,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 20,
     gap: 10,
   },
-  sectionTitle: { fontSize: typography.sectionTitle.fontSize, fontWeight: "600", color: colors.foreground },
-  filterRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  filterTrigger: {
-    maxWidth: 160,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 999,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-  },
-  filterTriggerText: { fontSize: typography.bodySmall.fontSize, color: colors.foreground, fontWeight: "500" },
+  sectionTitle: { fontSize: typography.sectionTitle.fontSize + 3, fontWeight: "800", color: colors.foreground },
+  historyHeader: { gap: 2 },
   body: { fontSize: 14, color: colors.mutedForeground },
-  valueWithDot: { flexDirection: "row", alignItems: "center", flexShrink: 1 },
-  tileValueRow: { flexDirection: "row", alignItems: "center" },
-  tileMeta: { fontSize: 11, color: colors.mutedForeground },
-  tileDoctor: { fontSize: 11, fontWeight: "600", color: colors.destructive },
-  energyTrack: { height: 6, borderRadius: 3, backgroundColor: colors.border, overflow: "hidden", marginTop: 4 },
-  energyFill: { height: 6, borderRadius: 3 },
   // Centered dialog (fades in), not a bottom sheet.
   sheetBackdrop: { flex: 1, justifyContent: "center", padding: 20, backgroundColor: "rgba(0,0,0,0.5)" },
-  sheet: { maxHeight: "85%", flexGrow: 0, backgroundColor: colors.background, borderRadius: 24 },
+  sheet: { maxHeight: "85%", flexGrow: 0, backgroundColor: colors.background, borderRadius: radius.lg },
   sheetContent: { padding: 16, gap: 12 },
   vitalsDisclaimer: { fontSize: 12, color: colors.mutedForeground },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 14,
+    borderRadius: radius.md,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: typography.body.fontSize,
@@ -857,9 +682,9 @@ function makeStyles(colors: ColorPalette) {
   bpRow: { flexDirection: "row", gap: 10 },
   bpInput: { flex: 1 },
   formActions: { flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 },
-  button: { backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 20 },
+  button: { backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 12, paddingHorizontal: 20 },
   buttonText: { color: colors.primaryForeground, fontSize: typography.button.fontSize, fontWeight: "600" },
-  secondaryButton: { borderRadius: 999, paddingVertical: 12, paddingHorizontal: 20 },
+  secondaryButton: { borderRadius: radius.md, paddingVertical: 12, paddingHorizontal: 20 },
   // Heart-rate red so "Measure with camera" reads as a button, not another input box.
   measureButton: { borderColor: "#F43F5E", borderWidth: 1.5, backgroundColor: "rgba(244, 63, 94, 0.12)" },
   secondaryButtonText: { color: colors.mutedForeground, fontSize: typography.button.fontSize, fontWeight: "500" },
